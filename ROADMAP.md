@@ -88,3 +88,12 @@
 - [ ] Dockerfile и docker-compose
 - [ ] GitHub Actions: сборка и тесты
 - [ ] Скриншоты и финальный README
+
+## Этап 11. Оформление репозитория
+- [ ] Лицензия MIT
+- [ ] Maven Wrapper (`mvnw`), чтобы проект собирался без установленного Maven
+- [ ] `.editorconfig` и `.gitattributes` (единые отступы и переводы строк)
+- [ ] Шаблоны Issue и Pull Request
+- [ ] Бейджи в README (сборка, Java, лицензия)
+- [ ] `CHANGELOG.md`
+- [ ] Релиз `v1.0.0` с тегом и собранным `.jar`
