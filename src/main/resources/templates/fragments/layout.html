@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(pageTitle)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${pageTitle} + ' — StudyDeck'">StudyDeck</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header th:fragment="header" class="site-header">
+    <div class="container header-inner">
+        <a class="logo" th:href="@{/}">StudyDeck</a>
+        <nav class="menu">
+            <a th:href="@{/}">Мои колоды</a>
+        </nav>
+    </div>
+</header>
+<footer th:fragment="footer" class="site-footer">
+    <div class="container">StudyDeck — учи термины и слова с карточками</div>
+</footer>
+</body>
+</html>

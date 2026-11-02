@@ -1,0 +1,102 @@
+:root {
+    --bg: #f5f6fa;
+    --surface: #ffffff;
+    --text: #1f2330;
+    --muted: #6b7080;
+    --accent: #4f5bd5;
+    --border: #e1e3ea;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+}
+
+a {
+    color: var(--accent);
+}
+
+.container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 16px;
+}
+
+.site-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+}
+
+.header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+}
+
+.logo {
+    font-weight: 700;
+    font-size: 20px;
+    text-decoration: none;
+}
+
+.menu a {
+    margin-left: 16px;
+    text-decoration: none;
+}
+
+main {
+    padding-top: 24px;
+    padding-bottom: 48px;
+}
+
+.deck-list {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+}
+
+.deck-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.deck-card h2 {
+    margin: 0 0 8px;
+    font-size: 18px;
+    overflow-wrap: anywhere;
+}
+
+.deck-description {
+    margin: 0 0 8px;
+    color: var(--muted);
+    overflow-wrap: anywhere;
+}
+
+.deck-count {
+    margin: 0;
+    font-size: 14px;
+    color: var(--muted);
+}
+
+.empty {
+    color: var(--muted);
+}
+
+.site-footer {
+    border-top: 1px solid var(--border);
+    padding: 16px 0;
+    color: var(--muted);
+    font-size: 14px;
+}
