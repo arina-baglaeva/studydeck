@@ -1,5 +1,6 @@
 package com.studydeck.repository;
 
+import com.studydeck.dto.DeckSummary;
 import com.studydeck.model.Card;
 import com.studydeck.model.Deck;
 import org.junit.jupiter.api.Test;
@@ -7,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 @DataJpaTest
 class DeckRepositoryTest {
@@ -52,5 +54,18 @@ class DeckRepositoryTest {
 
         assertThat(cardRepository.findByIdAndDeckId(card.getId(), first.getId())).isPresent();
         assertThat(cardRepository.findByIdAndDeckId(card.getId(), second.getId())).isEmpty();
+    }
+
+    @Test
+    void summariesCountCardsIncludingEmptyDecks() {
+        Deck java = new Deck("Java", null);
+        java.addCard(new Card("JVM", "машина"));
+        java.addCard(new Card("JDK", "набор"));
+        deckRepository.save(java);
+        deckRepository.save(new Deck("Empty", null));
+
+        assertThat(deckRepository.findAllSummaries())
+                .extracting(DeckSummary::getTitle, DeckSummary::getCardCount)
+                .containsExactlyInAnyOrder(tuple("Java", 2L), tuple("Empty", 0L));
     }
 }

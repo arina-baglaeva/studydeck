@@ -1,5 +1,6 @@
 package com.studydeck.service;
 
+import com.studydeck.dto.DeckSummary;
 import com.studydeck.exception.NotFoundException;
 import com.studydeck.model.Deck;
 import com.studydeck.repository.DeckRepository;
@@ -20,6 +21,11 @@ public class DeckService {
     @Transactional(readOnly = true)
     public List<Deck> findAll() {
         return deckRepository.findAllByOrderByCreatedAtDesc();
+    }
+
+    @Transactional(readOnly = true)
+    public List<DeckSummary> findAllSummaries() {
+        return deckRepository.findAllSummaries();
     }
 
     @Transactional(readOnly = true)
