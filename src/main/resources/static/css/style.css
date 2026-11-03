@@ -151,3 +151,29 @@ main {
     text-decoration: none;
     cursor: pointer;
 }
+
+.deck-title {
+    overflow-wrap: anywhere;
+}
+
+.card-table {
+    width: 100%;
+    margin-top: 16px;
+    border-collapse: collapse;
+    background: var(--surface);
+    border: 1px solid var(--border);
+}
+
+.card-table th,
+.card-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    vertical-align: top;
+    overflow-wrap: anywhere;
+}
+
+.card-table th {
+    color: var(--muted);
+    font-weight: 600;
+}

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${deck.title})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container">
+    <p><a th:href="@{/}">← Все колоды</a></p>
+    <h1 class="deck-title" th:text="${deck.title}">Колода</h1>
+    <p class="deck-description" th:if="${deck.description != null}" th:text="${deck.description}">Описание</p>
+    <p class="deck-count" th:text="'Карточек: ' + ${#lists.size(cards)}">Карточек: 0</p>
+    <p class="empty" th:if="${#lists.isEmpty(cards)}">В этой колоде пока нет карточек.</p>
+    <table class="card-table" th:unless="${#lists.isEmpty(cards)}">
+        <thead>
+        <tr>
+            <th>Термин</th>
+            <th>Определение</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="card : ${cards}">
+            <td th:text="${card.term}">Термин</td>
+            <td th:text="${card.definition}">Определение</td>
+        </tr>
+        </tbody>
+    </table>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

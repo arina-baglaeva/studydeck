@@ -5,10 +5,11 @@
 <header th:replace="~{fragments/layout :: header}"></header>
 <main class="container">
     <h1>Мои колоды</h1>
+    <p><a class="button" th:href="@{/decks/new}">Создать колоду</a></p>
     <p class="empty" th:if="${#lists.isEmpty(decks)}">Колод пока нет.</p>
     <ul class="deck-list" th:unless="${#lists.isEmpty(decks)}">
         <li class="deck-card" th:each="deck : ${decks}">
-            <h2 th:text="${deck.title}">Название</h2>
+            <h2><a th:href="@{/decks/{id}(id=${deck.id})}" th:text="${deck.title}">Название</a></h2>
             <p class="deck-description" th:if="${deck.description != null}" th:text="${deck.description}">Описание</p>
             <p class="deck-count" th:text="'Карточек: ' + ${deck.cardCount}">Карточек: 0</p>
         </li>
