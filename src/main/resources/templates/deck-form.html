@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Новая колода')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container">
+    <h1>Новая колода</h1>
+    <form class="form" th:action="@{/decks}" th:object="${deckForm}" method="post">
+        <div class="form-field">
+            <label for="title">Название</label>
+            <input id="title" type="text" th:field="*{title}" th:maxlength="${titleMaxLength}" required>
+            <p class="form-error" th:if="${#fields.hasErrors('title')}" th:errors="*{title}">Ошибка</p>
+        </div>
+        <div class="form-field">
+            <label for="description">Описание</label>
+            <textarea id="description" rows="4" th:field="*{description}" th:maxlength="${descriptionMaxLength}"></textarea>
+            <p class="form-error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}">Ошибка</p>
+        </div>
+        <div class="form-actions">
+            <button class="button" type="submit">Создать</button>
+            <a th:href="@{/}">Отмена</a>
+        </div>
+    </form>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>
