@@ -29,6 +29,7 @@ public class DeckController {
     @GetMapping("/{id}")
     public String showDeck(@PathVariable Long id, Model model) {
         model.addAttribute("deck", deckService.getById(id));
+        model.addAttribute("deckId", id);
         model.addAttribute("cards", cardService.findByDeck(id));
         return "deck";
     }

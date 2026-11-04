@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${cardId == null} ? 'Новая карточка' : 'Редактирование карточки')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container">
+    <p><a th:href="@{/decks/{id}(id=${deckId})}" th:text="'← ' + ${deck.title}">← Колода</a></p>
+    <h1 th:text="${cardId == null} ? 'Новая карточка' : 'Редактирование карточки'">Новая карточка</h1>
+    <form class="form" method="post" th:object="${cardForm}"
+          th:action="${cardId == null} ? @{/decks/{deckId}/cards(deckId=${deckId})} : @{/decks/{deckId}/cards/{cardId}(deckId=${deckId},cardId=${cardId})}">
+        <div class="form-field">
+            <label for="term">Термин</label>
+            <input id="term" type="text" th:field="*{term}" th:maxlength="${termMaxLength}" required>
+            <p class="form-error" th:if="${#fields.hasErrors('term')}" th:errors="*{term}">Ошибка</p>
+        </div>
+        <div class="form-field">
+            <label for="definition">Определение</label>
+            <textarea id="definition" rows="4" th:field="*{definition}" th:maxlength="${definitionMaxLength}" required></textarea>
+            <p class="form-error" th:if="${#fields.hasErrors('definition')}" th:errors="*{definition}">Ошибка</p>
+        </div>
+        <div class="form-actions">
+            <button class="button" type="submit" th:text="${cardId == null} ? 'Добавить' : 'Сохранить'">Добавить</button>
+            <a th:href="@{/decks/{id}(id=${deckId})}">Отмена</a>
+        </div>
+    </form>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

@@ -8,18 +8,21 @@
     <h1 class="deck-title" th:text="${deck.title}">Колода</h1>
     <p class="deck-description" th:if="${deck.description != null}" th:text="${deck.description}">Описание</p>
     <p class="deck-count" th:text="'Карточек: ' + ${#lists.size(cards)}">Карточек: 0</p>
+    <p><a class="button" th:href="@{/decks/{id}/cards/new(id=${deckId})}">Добавить карточку</a></p>
     <p class="empty" th:if="${#lists.isEmpty(cards)}">В этой колоде пока нет карточек.</p>
     <table class="card-table" th:unless="${#lists.isEmpty(cards)}">
         <thead>
         <tr>
             <th>Термин</th>
             <th>Определение</th>
+            <th></th>
         </tr>
         </thead>
         <tbody>
         <tr th:each="card : ${cards}">
             <td th:text="${card.term}">Термин</td>
             <td th:text="${card.definition}">Определение</td>
+            <td><a th:href="@{/decks/{deckId}/cards/{cardId}/edit(deckId=${deckId},cardId=${card.id})}">Изменить</a></td>
         </tr>
         </tbody>
     </table>
