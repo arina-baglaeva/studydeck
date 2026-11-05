@@ -53,6 +53,12 @@ public class DeckController {
         return "redirect:/decks/" + deck.getId();
     }
 
+    @PostMapping("/{id}/delete")
+    public String deleteDeck(@PathVariable Long id) {
+        deckService.delete(id);
+        return "redirect:/";
+    }
+
     private void addLengthLimits(Model model) {
         model.addAttribute("titleMaxLength", Deck.TITLE_MAX_LENGTH);
         model.addAttribute("descriptionMaxLength", Deck.DESCRIPTION_MAX_LENGTH);

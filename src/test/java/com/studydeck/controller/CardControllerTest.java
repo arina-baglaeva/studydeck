@@ -13,6 +13,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -171,5 +172,30 @@ class CardControllerTest {
         mockMvc.perform(get("/decks/1/cards/7/edit"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("&lt;script&gt;")));
+    }
+
+    @Test
+    void deleteCardRedirectsToDeck() throws Exception {
+        mockMvc.perform(post("/decks/1/cards/7/delete"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/decks/1"));
+
+        verify(cardService).deleteCard(1L, 7L);
+    }
+
+    @Test
+    void deleteCardFromAnotherDeckReturns404() throws Exception {
+        doThrow(new NotFoundException("Карточка не найдена")).when(cardService).deleteCard(2L, 7L);
+
+        mockMvc.perform(post("/decks/2/cards/7/delete"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void deleteCardWithGetIsNotAllowed() throws Exception {
+        mockMvc.perform(get("/decks/1/cards/7/delete"))
+                .andExpect(status().isMethodNotAllowed());
+
+        verify(cardService, never()).deleteCard(any(), any());
     }
 }

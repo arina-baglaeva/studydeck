@@ -69,6 +69,12 @@ public class CardController {
         return "redirect:/decks/" + deckId;
     }
 
+    @PostMapping("/{cardId}/delete")
+    public String deleteCard(@PathVariable Long deckId, @PathVariable Long cardId) {
+        cardService.deleteCard(deckId, cardId);
+        return "redirect:/decks/" + deckId;
+    }
+
     private void prepareForm(Model model, Long deckId, Long cardId) {
         model.addAttribute("deck", deckService.getById(deckId));
         model.addAttribute("deckId", deckId);

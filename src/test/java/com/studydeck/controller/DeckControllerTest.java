@@ -16,6 +16,7 @@ import java.util.List;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -136,5 +137,41 @@ class DeckControllerTest {
                 .andExpect(model().attributeHasFieldErrors("deckForm", "description"));
 
         verify(deckService, never()).create(any(), any());
+    }
+
+    @Test
+    void deleteDeckRedirectsToHome() throws Exception {
+        mockMvc.perform(post("/decks/3/delete"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/"));
+
+        verify(deckService).delete(3L);
+    }
+
+    @Test
+    void deleteMissingDeckReturns404() throws Exception {
+        doThrow(new NotFoundException("Колода не найдена")).when(deckService).delete(999L);
+
+        mockMvc.perform(post("/decks/999/delete"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void deleteDeckWithGetIsNotAllowed() throws Exception {
+        mockMvc.perform(get("/decks/3/delete"))
+                .andExpect(status().isMethodNotAllowed());
+
+        verify(deckService, never()).delete(any());
+    }
+
+    @Test
+    void deckPageHasDeleteForms() throws Exception {
+        when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
+        when(cardService.findByDeck(1L)).thenReturn(List.of(new Card("JVM", "машина")));
+
+        mockMvc.perform(get("/decks/1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("action=\"/decks/1/delete\"")))
+                .andExpect(content().string(containsString("Удалить эту карточку?")));
     }
 }
