@@ -152,6 +152,41 @@ main {
     cursor: pointer;
 }
 
+.button-danger {
+    background: #c0392b;
+}
+
+.link-button {
+    padding: 0;
+    border: none;
+    background: none;
+    color: #c0392b;
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.inline-form {
+    display: inline;
+    margin: 0;
+}
+
+.deck-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin: 16px 0;
+}
+
+.row-actions {
+    white-space: nowrap;
+}
+
+.row-actions a {
+    margin-right: 12px;
+}
+
 .deck-title {
     overflow-wrap: anywhere;
 }

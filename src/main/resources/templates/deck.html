@@ -8,7 +8,13 @@
     <h1 class="deck-title" th:text="${deck.title}">Колода</h1>
     <p class="deck-description" th:if="${deck.description != null}" th:text="${deck.description}">Описание</p>
     <p class="deck-count" th:text="'Карточек: ' + ${#lists.size(cards)}">Карточек: 0</p>
-    <p><a class="button" th:href="@{/decks/{id}/cards/new(id=${deckId})}">Добавить карточку</a></p>
+    <div class="deck-actions">
+        <a class="button" th:href="@{/decks/{id}/cards/new(id=${deckId})}">Добавить карточку</a>
+        <form class="inline-form" method="post" th:action="@{/decks/{id}/delete(id=${deckId})}"
+              data-confirm="Удалить колоду вместе со всеми карточками?">
+            <button class="button button-danger" type="submit">Удалить колоду</button>
+        </form>
+    </div>
     <p class="empty" th:if="${#lists.isEmpty(cards)}">В этой колоде пока нет карточек.</p>
     <table class="card-table" th:unless="${#lists.isEmpty(cards)}">
         <thead>
@@ -22,7 +28,14 @@
         <tr th:each="card : ${cards}">
             <td th:text="${card.term}">Термин</td>
             <td th:text="${card.definition}">Определение</td>
-            <td><a th:href="@{/decks/{deckId}/cards/{cardId}/edit(deckId=${deckId},cardId=${card.id})}">Изменить</a></td>
+            <td class="row-actions">
+                <a th:href="@{/decks/{deckId}/cards/{cardId}/edit(deckId=${deckId},cardId=${card.id})}">Изменить</a>
+                <form class="inline-form" method="post"
+                      th:action="@{/decks/{deckId}/cards/{cardId}/delete(deckId=${deckId},cardId=${card.id})}"
+                      data-confirm="Удалить эту карточку?">
+                    <button class="link-button" type="submit">Удалить</button>
+                </form>
+            </td>
         </tr>
         </tbody>
     </table>
