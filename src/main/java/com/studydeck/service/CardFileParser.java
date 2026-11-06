@@ -10,7 +10,7 @@ import java.util.List;
 @Component
 public class CardFileParser {
 
-    private static final String DELIMITER = " - ";
+    private static final List<String> DELIMITERS = List.of("\t", " — ", " – ", " - ", "—", ":", ";");
 
     public ParseResult parse(String text) {
         List<ParsedCard> cards = new ArrayList<>();
@@ -34,15 +34,25 @@ public class CardFileParser {
     }
 
     ParsedCard parseLine(String line) {
-        int index = line.indexOf(DELIMITER);
-        if (index < 0) {
+        String delimiter = findDelimiter(line);
+        if (delimiter == null) {
             return null;
         }
+        int index = line.indexOf(delimiter);
         String term = TextUtils.clean(line.substring(0, index));
-        String definition = TextUtils.clean(line.substring(index + DELIMITER.length()));
+        String definition = TextUtils.clean(line.substring(index + delimiter.length()));
         if (term.isEmpty() || definition.isEmpty()) {
             return null;
         }
         return new ParsedCard(term, definition);
+    }
+
+    String findDelimiter(String line) {
+        for (String delimiter : DELIMITERS) {
+            if (line.contains(delimiter)) {
+                return delimiter;
+            }
+        }
+        return null;
     }
 }
