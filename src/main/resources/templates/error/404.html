@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Не найдено')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container error-page">
+    <p class="error-code">404</p>
+    <h1 th:text="${errorMessage != null ? errorMessage : 'Страница не найдена'}">Страница не найдена</h1>
+    <p>Возможно, её удалили или в адресе опечатка.</p>
+    <p><a class="button" th:href="@{/}">К списку колод</a></p>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

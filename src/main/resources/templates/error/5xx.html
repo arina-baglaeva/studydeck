@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Ошибка')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container error-page">
+    <p class="error-code">500</p>
+    <h1>Что-то пошло не так</h1>
+    <p>Попробуйте обновить страницу чуть позже.</p>
+    <p><a class="button" th:href="@{/}">К списку колод</a></p>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

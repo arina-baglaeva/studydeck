@@ -228,3 +228,15 @@ main {
     border-radius: 8px;
     font: inherit;
 }
+
+.error-page {
+    text-align: center;
+    padding: 48px 0;
+}
+
+.error-code {
+    margin: 0;
+    font-size: 64px;
+    font-weight: 700;
+    color: var(--accent);
+}

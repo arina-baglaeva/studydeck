@@ -207,4 +207,23 @@ class DeckControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(not(containsString("<script>alert(1)</script>"))));
     }
+
+    @Test
+    void missingDeckShowsFriendly404Page() throws Exception {
+        when(deckService.getById(999L)).thenThrow(new NotFoundException("Колода не найдена"));
+
+        mockMvc.perform(get("/decks/999"))
+                .andExpect(status().isNotFound())
+                .andExpect(view().name("error/404"))
+                .andExpect(content().string(containsString("Колода не найдена")))
+                .andExpect(content().string(containsString("К списку колод")));
+    }
+
+    @Test
+    void notNumericDeckIdReturns404() throws Exception {
+        mockMvc.perform(get("/decks/abc"))
+                .andExpect(status().isNotFound())
+                .andExpect(view().name("error/404"))
+                .andExpect(content().string(not(containsString("NumberFormatException"))));
+    }
 }
