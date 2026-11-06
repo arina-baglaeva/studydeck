@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 @RequestMapping("/decks")
@@ -27,10 +28,14 @@ public class DeckController {
     }
 
     @GetMapping("/{id}")
-    public String showDeck(@PathVariable Long id, Model model) {
+    public String showDeck(@PathVariable Long id,
+                           @RequestParam(name = "q", required = false) String query,
+                           Model model) {
         model.addAttribute("deck", deckService.getById(id));
         model.addAttribute("deckId", id);
-        model.addAttribute("cards", cardService.findByDeck(id));
+        model.addAttribute("cards", cardService.search(id, query));
+        model.addAttribute("query", query);
+        model.addAttribute("searchMaxLength", CardService.SEARCH_MAX_LENGTH);
         return "deck";
     }
 

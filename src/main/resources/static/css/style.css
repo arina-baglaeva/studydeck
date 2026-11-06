@@ -212,3 +212,19 @@ main {
     color: var(--muted);
     font-weight: 600;
 }
+
+.search-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 16px 0;
+    max-width: 560px;
+}
+
+.search-form input {
+    flex: 1;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font: inherit;
+}

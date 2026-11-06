@@ -44,7 +44,7 @@ class DeckControllerTest {
     @Test
     void deckPageShowsCards() throws Exception {
         when(deckService.getById(1L)).thenReturn(new Deck("Java", "Термины"));
-        when(cardService.findByDeck(1L)).thenReturn(List.of(new Card("JVM", "виртуальная машина Java")));
+        when(cardService.search(1L, null)).thenReturn(List.of(new Card("JVM", "виртуальная машина Java")));
 
         mockMvc.perform(get("/decks/1"))
                 .andExpect(status().isOk())
@@ -57,7 +57,7 @@ class DeckControllerTest {
     @Test
     void deckPageShowsMessageWhenNoCards() throws Exception {
         when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
-        when(cardService.findByDeck(1L)).thenReturn(List.of());
+        when(cardService.search(1L, null)).thenReturn(List.of());
 
         mockMvc.perform(get("/decks/1"))
                 .andExpect(status().isOk())
@@ -75,7 +75,7 @@ class DeckControllerTest {
     @Test
     void cardTextIsEscaped() throws Exception {
         when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
-        when(cardService.findByDeck(1L)).thenReturn(List.of(new Card("<b>x</b>", "<script>alert(1)</script>")));
+        when(cardService.search(1L, null)).thenReturn(List.of(new Card("<b>x</b>", "<script>alert(1)</script>")));
 
         mockMvc.perform(get("/decks/1"))
                 .andExpect(status().isOk())
@@ -167,11 +167,44 @@ class DeckControllerTest {
     @Test
     void deckPageHasDeleteForms() throws Exception {
         when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
-        when(cardService.findByDeck(1L)).thenReturn(List.of(new Card("JVM", "машина")));
+        when(cardService.search(1L, null)).thenReturn(List.of(new Card("JVM", "машина")));
 
         mockMvc.perform(get("/decks/1"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("action=\"/decks/1/delete\"")))
                 .andExpect(content().string(containsString("Удалить эту карточку?")));
+    }
+
+    @Test
+    void searchPassesQueryAndShowsFoundCount() throws Exception {
+        when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
+        when(cardService.search(1L, "jvm")).thenReturn(List.of(new Card("JVM", "машина")));
+
+        mockMvc.perform(get("/decks/1").param("q", "jvm"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Найдено: 1")))
+                .andExpect(content().string(containsString("value=\"jvm\"")));
+
+        verify(cardService).search(1L, "jvm");
+    }
+
+    @Test
+    void searchWithoutResultsShowsMessage() throws Exception {
+        when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
+        when(cardService.search(1L, "xyz")).thenReturn(List.of());
+
+        mockMvc.perform(get("/decks/1").param("q", "xyz"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("По запросу ничего не найдено")));
+    }
+
+    @Test
+    void searchQueryIsEscaped() throws Exception {
+        when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
+        when(cardService.search(1L, "\"><script>alert(1)</script>")).thenReturn(List.of());
+
+        mockMvc.perform(get("/decks/1").param("q", "\"><script>alert(1)</script>"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("<script>alert(1)</script>"))));
     }
 }

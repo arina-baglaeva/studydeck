@@ -7,7 +7,7 @@
     <p><a th:href="@{/}">← Все колоды</a></p>
     <h1 class="deck-title" th:text="${deck.title}">Колода</h1>
     <p class="deck-description" th:if="${deck.description != null}" th:text="${deck.description}">Описание</p>
-    <p class="deck-count" th:text="'Карточек: ' + ${#lists.size(cards)}">Карточек: 0</p>
+    <p class="deck-count" th:text="(${#strings.isEmpty(query)} ? 'Карточек: ' : 'Найдено: ') + ${#lists.size(cards)}">Карточек: 0</p>
     <div class="deck-actions">
         <a class="button" th:href="@{/decks/{id}/cards/new(id=${deckId})}">Добавить карточку</a>
         <form class="inline-form" method="post" th:action="@{/decks/{id}/delete(id=${deckId})}"
@@ -15,7 +15,14 @@
             <button class="button button-danger" type="submit">Удалить колоду</button>
         </form>
     </div>
-    <p class="empty" th:if="${#lists.isEmpty(cards)}">В этой колоде пока нет карточек.</p>
+    <form class="search-form" method="get" th:action="@{/decks/{id}(id=${deckId})}">
+        <input type="search" name="q" th:value="${query}" th:maxlength="${searchMaxLength}"
+               placeholder="Найти карточку" aria-label="Поиск карточек">
+        <button class="button" type="submit">Найти</button>
+        <a th:if="${query != null and !#strings.isEmpty(query)}" th:href="@{/decks/{id}(id=${deckId})}">Сбросить</a>
+    </form>
+    <p class="empty" th:if="${#lists.isEmpty(cards) and #strings.isEmpty(query)}">В этой колоде пока нет карточек.</p>
+    <p class="empty" th:if="${#lists.isEmpty(cards) and !#strings.isEmpty(query)}">По запросу ничего не найдено.</p>
     <table class="card-table" th:unless="${#lists.isEmpty(cards)}">
         <thead>
         <tr>

@@ -8,9 +8,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Locale;
 
 @Service
 public class CardService {
+
+    public static final int SEARCH_MAX_LENGTH = 100;
 
     private final CardRepository cardRepository;
     private final DeckService deckService;
@@ -24,6 +27,26 @@ public class CardService {
     public List<Card> findByDeck(Long deckId) {
         deckService.getById(deckId);
         return cardRepository.findByDeckIdOrderByIdAsc(deckId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Card> search(Long deckId, String query) {
+        String text = TextUtils.clean(query);
+        if (text.isEmpty()) {
+            return findByDeck(deckId);
+        }
+        if (text.length() > SEARCH_MAX_LENGTH) {
+            text = text.substring(0, SEARCH_MAX_LENGTH);
+        }
+        deckService.getById(deckId);
+        String pattern = "%" + escapeLike(text.toLowerCase(Locale.ROOT)) + "%";
+        return cardRepository.searchInDeck(deckId, pattern);
+    }
+
+    static String escapeLike(String text) {
+        return text.replace("!", "!!")
+                .replace("%", "!%")
+                .replace("_", "!_");
     }
 
     @Transactional(readOnly = true)
