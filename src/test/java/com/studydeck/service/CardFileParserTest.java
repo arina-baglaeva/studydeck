@@ -125,4 +125,81 @@ class CardFileParserTest {
                 .containsExactly(tuple("e-mail", "электронная почта"));
         assertThat(result.getBadLines()).containsExactly(2);
     }
+
+    @Test
+    void parsesSimpleCsv() {
+        ParseResult result = parser.parseCsv("bug,ошибка\nfix,исправление");
+
+        assertThat(result.getCards())
+                .extracting(ParsedCard::getTerm, ParsedCard::getDefinition)
+                .containsExactly(
+                        tuple("bug", "ошибка"),
+                        tuple("fix", "исправление"));
+        assertThat(result.getBadLines()).isEmpty();
+    }
+
+    @Test
+    void csvQuotedFieldMayContainSeparatorAndQuotes() {
+        ParseResult result = parser.parseCsv("\"try, catch\",\"блок \"\"обработки\"\" ошибок\"");
+
+        assertThat(result.getCards())
+                .extracting(ParsedCard::getTerm, ParsedCard::getDefinition)
+                .containsExactly(tuple("try, catch", "блок \"обработки\" ошибок"));
+    }
+
+    @Test
+    void csvWithSemicolonSeparatorIsDetected() {
+        ParseResult result = parser.parseCsv("JVM;виртуальная машина, Java\nJDK;набор инструментов");
+
+        assertThat(result.getCards())
+                .extracting(ParsedCard::getTerm, ParsedCard::getDefinition)
+                .containsExactly(
+                        tuple("JVM", "виртуальная машина, Java"),
+                        tuple("JDK", "набор инструментов"));
+    }
+
+    @Test
+    void csvHeaderRowIsSkipped() {
+        ParseResult result = parser.parseCsv("Термин,Определение\nbug,ошибка");
+
+        assertThat(result.getCards())
+                .extracting(ParsedCard::getTerm)
+                .containsExactly("bug");
+        assertThat(result.getBadLines()).isEmpty();
+    }
+
+    @Test
+    void csvExtraColumnsAreIgnored() {
+        ParseResult result = parser.parseCsv("bug,ошибка,лишняя колонка");
+
+        assertThat(result.getCards())
+                .extracting(ParsedCard::getTerm, ParsedCard::getDefinition)
+                .containsExactly(tuple("bug", "ошибка"));
+    }
+
+    @Test
+    void csvReportsBadLines() {
+        ParseResult result = parser.parseCsv("bug,ошибка\nодна колонка\n,нет термина\n\"незакрытая,кавычка");
+
+        assertThat(result.getCards()).hasSize(1);
+        assertThat(result.getBadLines()).containsExactly(2, 3, 4);
+    }
+
+    @Test
+    void csvSkipsBlankLinesAndNull() {
+        assertThat(parser.parseCsv("\n\nbug,ошибка\r\n\n").getCards()).hasSize(1);
+        assertThat(parser.parseCsv(null).getCards()).isEmpty();
+    }
+
+    @Test
+    void parseFileChoosesFormatByExtension() {
+        String text = "bug,ошибка - баг";
+
+        assertThat(parser.parseFile("words.CSV", text).getCards())
+                .extracting(ParsedCard::getTerm)
+                .containsExactly("bug");
+        assertThat(parser.parseFile("words.txt", text).getCards())
+                .extracting(ParsedCard::getTerm)
+                .containsExactly("bug,ошибка");
+    }
 }
