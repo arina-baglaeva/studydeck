@@ -1,5 +1,6 @@
 package com.studydeck.service;
 
+import com.studydeck.dto.ParsedCard;
 import com.studydeck.exception.NotFoundException;
 import com.studydeck.model.Card;
 import com.studydeck.model.Deck;
@@ -61,6 +62,17 @@ public class CardService {
         Card card = new Card(TextUtils.clean(term), TextUtils.clean(definition));
         deck.addCard(card);
         return cardRepository.save(card);
+    }
+
+    @Transactional
+    public int addCards(Long deckId, List<ParsedCard> parsedCards) {
+        Deck deck = deckService.getById(deckId);
+        for (ParsedCard parsedCard : parsedCards) {
+            Card card = new Card(TextUtils.clean(parsedCard.getTerm()), TextUtils.clean(parsedCard.getDefinition()));
+            deck.addCard(card);
+            cardRepository.save(card);
+        }
+        return parsedCards.size();
     }
 
     @Transactional

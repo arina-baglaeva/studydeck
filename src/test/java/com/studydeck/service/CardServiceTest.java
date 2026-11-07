@@ -1,5 +1,6 @@
 package com.studydeck.service;
 
+import com.studydeck.dto.ParsedCard;
 import com.studydeck.exception.NotFoundException;
 import com.studydeck.model.Card;
 import com.studydeck.model.Deck;
@@ -7,6 +8,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -31,6 +34,25 @@ class CardServiceTest {
         assertThat(cardService.findByDeck(deck.getId()))
                 .extracting(Card::getTerm, Card::getDefinition)
                 .containsExactly(tuple("bug", "ошибка в программе"));
+    }
+
+    @Test
+    void addCardsSavesAllParsedCards() {
+        Deck deck = deckService.create("Import", null);
+        List<ParsedCard> parsed = List.of(new ParsedCard("bug", "ошибка"), new ParsedCard("fix", "исправление"));
+
+        int added = cardService.addCards(deck.getId(), parsed);
+
+        assertThat(added).isEqualTo(2);
+        assertThat(cardService.findByDeck(deck.getId()))
+                .extracting(Card::getTerm)
+                .containsExactly("bug", "fix");
+    }
+
+    @Test
+    void addCardsToMissingDeckThrows() {
+        assertThatThrownBy(() -> cardService.addCards(999L, List.of(new ParsedCard("bug", "ошибка"))))
+                .isInstanceOf(NotFoundException.class);
     }
 
     @Test

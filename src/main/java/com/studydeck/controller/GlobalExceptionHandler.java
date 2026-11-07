@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -18,6 +19,13 @@ public class GlobalExceptionHandler {
     public String handleNotFound(NotFoundException exception, Model model) {
         model.addAttribute("errorMessage", exception.getMessage());
         return "error/404";
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    @ResponseStatus(HttpStatus.PAYLOAD_TOO_LARGE)
+    public String handleTooLargeFile(Model model) {
+        model.addAttribute("status", HttpStatus.PAYLOAD_TOO_LARGE.value());
+        return "error/4xx";
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)

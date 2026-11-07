@@ -10,6 +10,7 @@
     <p class="deck-count" th:text="(${#strings.isEmpty(query)} ? 'Карточек: ' : 'Найдено: ') + ${#lists.size(cards)}">Карточек: 0</p>
     <div class="deck-actions">
         <a class="button" th:href="@{/decks/{id}/cards/new(id=${deckId})}">Добавить карточку</a>
+        <a class="button" th:href="@{/decks/{id}/import(id=${deckId})}">Импорт из файла</a>
         <form class="inline-form" method="post" th:action="@{/decks/{id}/delete(id=${deckId})}"
               data-confirm="Удалить колоду вместе со всеми карточками?">
             <button class="button button-danger" type="submit">Удалить колоду</button>

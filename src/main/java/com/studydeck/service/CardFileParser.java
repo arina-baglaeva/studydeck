@@ -2,6 +2,7 @@ package com.studydeck.service;
 
 import com.studydeck.dto.ParseResult;
 import com.studydeck.dto.ParsedCard;
+import com.studydeck.model.Card;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -48,9 +49,16 @@ public class CardFileParser {
             return null;
         }
         int index = line.indexOf(delimiter);
-        String term = TextUtils.clean(line.substring(0, index));
-        String definition = TextUtils.clean(line.substring(index + delimiter.length()));
+        return createCard(line.substring(0, index), line.substring(index + delimiter.length()));
+    }
+
+    ParsedCard createCard(String rawTerm, String rawDefinition) {
+        String term = TextUtils.clean(rawTerm);
+        String definition = TextUtils.clean(rawDefinition);
         if (term.isEmpty() || definition.isEmpty()) {
+            return null;
+        }
+        if (term.length() > Card.TERM_MAX_LENGTH || definition.length() > Card.DEFINITION_MAX_LENGTH) {
             return null;
         }
         return new ParsedCard(term, definition);
@@ -98,12 +106,7 @@ public class CardFileParser {
         if (fields == null || fields.size() < 2) {
             return null;
         }
-        String term = TextUtils.clean(fields.get(0));
-        String definition = TextUtils.clean(fields.get(1));
-        if (term.isEmpty() || definition.isEmpty()) {
-            return null;
-        }
-        return new ParsedCard(term, definition);
+        return createCard(fields.get(0), fields.get(1));
     }
 
     List<String> splitCsvLine(String line, char separator) {
