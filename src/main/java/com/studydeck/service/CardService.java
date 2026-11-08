@@ -8,8 +8,11 @@ import com.studydeck.repository.CardRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 @Service
 public class CardService {
@@ -67,12 +70,33 @@ public class CardService {
     @Transactional
     public int addCards(Long deckId, List<ParsedCard> parsedCards) {
         Deck deck = deckService.getById(deckId);
-        for (ParsedCard parsedCard : parsedCards) {
+        List<ParsedCard> newCards = withoutDuplicates(deckId, parsedCards);
+        for (ParsedCard parsedCard : newCards) {
             Card card = new Card(TextUtils.clean(parsedCard.getTerm()), TextUtils.clean(parsedCard.getDefinition()));
             deck.addCard(card);
             cardRepository.save(card);
         }
-        return parsedCards.size();
+        return newCards.size();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ParsedCard> withoutDuplicates(Long deckId, List<ParsedCard> parsedCards) {
+        deckService.getById(deckId);
+        Set<String> knownTerms = new HashSet<>();
+        for (Card card : cardRepository.findByDeckIdOrderByIdAsc(deckId)) {
+            knownTerms.add(termKey(card.getTerm()));
+        }
+        List<ParsedCard> result = new ArrayList<>();
+        for (ParsedCard parsedCard : parsedCards) {
+            if (knownTerms.add(termKey(parsedCard.getTerm()))) {
+                result.add(parsedCard);
+            }
+        }
+        return result;
+    }
+
+    static String termKey(String term) {
+        return TextUtils.clean(term).toLowerCase(Locale.ROOT);
     }
 
     @Transactional

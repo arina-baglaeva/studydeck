@@ -50,6 +50,34 @@ class CardServiceTest {
     }
 
     @Test
+    void addCardsSkipsDuplicateTerms() {
+        Deck deck = deckService.create("Duplicates", null);
+        cardService.addCard(deck.getId(), "bug", "ошибка");
+        List<ParsedCard> parsed = List.of(
+                new ParsedCard("BUG", "жук"),
+                new ParsedCard("fix", "исправление"),
+                new ParsedCard(" Fix ", "починка"));
+
+        int added = cardService.addCards(deck.getId(), parsed);
+
+        assertThat(added).isEqualTo(1);
+        assertThat(cardService.findByDeck(deck.getId()))
+                .extracting(Card::getTerm, Card::getDefinition)
+                .containsExactly(tuple("bug", "ошибка"), tuple("fix", "исправление"));
+    }
+
+    @Test
+    void withoutDuplicatesChecksOnlyTheGivenDeck() {
+        Deck first = deckService.create("First", null);
+        Deck second = deckService.create("Second", null);
+        cardService.addCard(first.getId(), "bug", "ошибка");
+
+        List<ParsedCard> result = cardService.withoutDuplicates(second.getId(), List.of(new ParsedCard("bug", "ошибка")));
+
+        assertThat(result).hasSize(1);
+    }
+
+    @Test
     void addCardsToMissingDeckThrows() {
         assertThatThrownBy(() -> cardService.addCards(999L, List.of(new ParsedCard("bug", "ошибка"))))
                 .isInstanceOf(NotFoundException.class);
