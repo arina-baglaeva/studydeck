@@ -1,6 +1,8 @@
 package com.studydeck.dto;
 
-public class ParsedCard {
+import java.io.Serializable;
+
+public class ParsedCard implements Serializable {
 
     private final String term;
     private final String definition;

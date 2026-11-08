@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Предпросмотр импорта')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container">
+    <p><a th:href="@{/decks/{id}(id=${deckId})}" th:text="'← ' + ${deck.title}">← Колода</a></p>
+    <h1>Предпросмотр импорта</h1>
+    <p class="notice notice-error" th:if="${previewError != null}" th:text="${previewError}">Ошибка</p>
+    <p th:text="'Новых карточек: ' + ${#lists.size(preview.cards)}">Новых карточек: 0</p>
+    <p class="notice notice-warning" th:if="${preview.duplicateCount > 0}"
+       th:text="'Пропущено дубликатов: ' + ${preview.duplicateCount}">Пропущено дубликатов</p>
+    <p class="notice notice-warning" th:if="${!#lists.isEmpty(preview.badLines)}"
+       th:text="'Не удалось разобрать строки: ' + ${#strings.listJoin(preview.badLines, ', ')}">Плохие строки</p>
+    <p class="empty" th:if="${#lists.isEmpty(preview.cards)}">В файле нет новых карточек для этой колоды.</p>
+    <form method="post" th:action="@{/decks/{id}/import/confirm(id=${deckId})}"
+          th:unless="${#lists.isEmpty(preview.cards)}">
+        <table class="card-table">
+            <thead>
+            <tr>
+                <th>Добавить</th>
+                <th>Термин</th>
+                <th>Определение</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="card, stat : ${preview.cards}">
+                <td><input type="checkbox" name="selected" th:value="${stat.index}" checked
+                           th:attr="aria-label='Добавить ' + ${card.term}"></td>
+                <td th:text="${card.term}">Термин</td>
+                <td th:text="${card.definition}">Определение</td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="deck-actions">
+            <button class="button" type="submit">Сохранить отмеченные</button>
+        </div>
+    </form>
+    <form class="inline-form" method="post" th:action="@{/decks/{id}/import/cancel(id=${deckId})}">
+        <button class="link-button" type="submit">Отменить импорт</button>
+    </form>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>
