@@ -6,6 +6,7 @@ import com.studydeck.model.Card;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.tuple;
 
 class CardFileParserTest {
@@ -234,5 +235,70 @@ class CardFileParserTest {
 
         assertThat(result.getTooLongLines()).isEmpty();
         assertThat(result.getCards()).hasSize(1);
+    }
+
+    @Test
+    void findDelimiterReturnsNullWhenNothingFound() {
+        assertThat(parser.findDelimiter("просто текст")).isNull();
+        assertThat(parser.findDelimiter("read-only")).isNull();
+        assertThat(parser.findDelimiter("bug - ошибка")).isEqualTo(" - ");
+    }
+
+    @Test
+    void splitCsvLineKeepsEmptyFields() {
+        assertThat(parser.splitCsvLine("a,,b,", ',')).containsExactly("a", "", "b", "");
+    }
+
+    @Test
+    void splitCsvLineReturnsNullForUnclosedQuote() {
+        assertThat(parser.splitCsvLine("\"abc,def", ',')).isNull();
+    }
+
+    @Test
+    void detectSeparatorPrefersSemicolonOnlyWhenItSplitsLine() {
+        assertThat(parser.detectSeparator("bug;ошибка")).isEqualTo(';');
+        assertThat(parser.detectSeparator("bug,ошибка")).isEqualTo(',');
+        assertThat(parser.detectSeparator("\"a;b\",c")).isEqualTo(',');
+    }
+
+    @Test
+    void csvSeparatorIsTakenFromFirstLine() {
+        ParseResult result = parser.parseCsv("bug;ошибка\nfix,исправление");
+
+        assertThat(result.getCards()).extracting(ParsedCard::getTerm).containsExactly("bug");
+        assertThat(result.getBadLines()).containsExactly(2);
+    }
+
+    @Test
+    void csvHeaderInEnglishIsSkippedOnlyOnFirstLine() {
+        ParseResult result = parser.parseCsv("term,definition\nterm,термин");
+
+        assertThat(result.getCards())
+                .extracting(ParsedCard::getTerm, ParsedCard::getDefinition)
+                .containsExactly(tuple("term", "термин"));
+    }
+
+    @Test
+    void lineNumbersCountBlankLines() {
+        ParseResult result = parser.parse("bug - ошибка\n\n\nплохая строка");
+
+        assertThat(result.getBadLines()).containsExactly(4);
+    }
+
+    @Test
+    void htmlInTextIsKeptAsPlainText() {
+        ParseResult result = parser.parse("<b>tag</b> - <script>alert(1)</script>");
+
+        assertThat(result.getCards())
+                .extracting(ParsedCard::getTerm, ParsedCard::getDefinition)
+                .containsExactly(tuple("<b>tag</b>", "<script>alert(1)</script>"));
+    }
+
+    @Test
+    void veryLongLineDoesNotBreakParser() {
+        String longLine = "x".repeat(100_000);
+
+        assertThatCode(() -> parser.parse(longLine + " - y")).doesNotThrowAnyException();
+        assertThat(parser.parse(longLine + " - y").getTooLongLines()).containsExactly(1);
     }
 }
