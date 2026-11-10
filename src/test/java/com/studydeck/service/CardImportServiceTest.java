@@ -87,4 +87,28 @@ class CardImportServiceTest {
         assertThat(result.getCards()).hasSize(1);
         assertThat(result.getBadLines()).containsExactly(2);
     }
+
+    @Test
+    void rejectsBinaryFileWithTxtExtension() {
+        byte[] bytes = {0x50, 0x4B, 0x03, 0x04, 0x00, 0x00, 0x20, 0x2D, 0x20, 0x61};
+        MockMultipartFile file = new MockMultipartFile("file", "archive.txt", "text/plain", bytes);
+
+        assertThatThrownBy(() -> service.readFile(file))
+                .isInstanceOf(ImportException.class)
+                .hasMessageContaining("двоичный");
+    }
+
+    @Test
+    void tabsAndLineBreaksAreNotBinary() {
+        assertThat(service.looksBinary("bug\tterm\r\nfix\tdefinition")).isFalse();
+        assertThat(service.looksBinary("bug\u0007 - bell")).isTrue();
+    }
+
+    @Test
+    void uppercaseExtensionIsAllowed() {
+        assertThat(service.hasAllowedExtension("WORDS.TXT")).isTrue();
+        assertThat(service.hasAllowedExtension("words.CSV")).isTrue();
+        assertThat(service.hasAllowedExtension("words")).isFalse();
+        assertThat(service.hasAllowedExtension(null)).isFalse();
+    }
 }

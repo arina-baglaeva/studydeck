@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 public class GlobalExceptionHandler {
 
     private static final String DEFAULT_NOT_FOUND_MESSAGE = "Страница не найдена";
+    static final String TOO_LARGE_FILE_MESSAGE = "Файл слишком большой: можно загрузить не больше 1 МБ";
 
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
@@ -25,6 +26,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.PAYLOAD_TOO_LARGE)
     public String handleTooLargeFile(Model model) {
         model.addAttribute("status", HttpStatus.PAYLOAD_TOO_LARGE.value());
+        model.addAttribute("errorMessage", TOO_LARGE_FILE_MESSAGE);
         return "error/4xx";
     }
 

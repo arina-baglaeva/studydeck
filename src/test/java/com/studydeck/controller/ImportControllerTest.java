@@ -16,6 +16,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.List;
 
@@ -187,5 +188,15 @@ class ImportControllerTest {
                 .andExpect(status().isNotFound());
 
         verify(cardImportService, never()).readFile(any());
+    }
+
+    @Test
+    void tooLargeUploadShowsFriendlyMessage() throws Exception {
+        when(cardImportService.readFile(any())).thenThrow(new MaxUploadSizeExceededException(2L * 1024 * 1024));
+
+        mockMvc.perform(multipart("/decks/1/import").file(file))
+                .andExpect(status().isPayloadTooLarge())
+                .andExpect(view().name("error/4xx"))
+                .andExpect(content().string(containsString("Файл слишком большой")));
     }
 }

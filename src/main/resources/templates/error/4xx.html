@@ -6,6 +6,7 @@
 <main class="container error-page">
     <p class="error-code" th:text="${status}">400</p>
     <h1>Некорректный запрос</h1>
+    <p th:if="${errorMessage != null}" th:text="${errorMessage}">Сообщение</p>
     <p>Проверьте адрес или вернитесь на главную.</p>
     <p><a class="button" th:href="@{/}">К списку колод</a></p>
 </main>

@@ -40,6 +40,9 @@ public class CardImportService {
             throw new ImportException("Файл слишком большой: максимум 1 МБ");
         }
         String text = readText(file);
+        if (looksBinary(text)) {
+            throw new ImportException("Файл похож на двоичный, загрузите обычный текст");
+        }
         if (text.lines().count() > MAX_LINES) {
             throw new ImportException("Слишком много строк: максимум " + MAX_LINES);
         }
@@ -53,6 +56,16 @@ public class CardImportService {
         String name = fileName.toLowerCase(Locale.ROOT);
         for (String extension : ALLOWED_EXTENSIONS) {
             if (name.endsWith(extension)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    boolean looksBinary(String text) {
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (Character.isISOControl(c) && c != '\n' && c != '\r' && c != '\t') {
                 return true;
             }
         }
