@@ -199,4 +199,17 @@ class ImportControllerTest {
                 .andExpect(view().name("error/4xx"))
                 .andExpect(content().string(containsString("Файл слишком большой")));
     }
+
+    @Test
+    void previewShowsTooLongLines() throws Exception {
+        when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute(ImportController.PREVIEW_ATTRIBUTE,
+                new ImportPreview(1L, List.of(bug), List.of(), List.of(4, 7), 0));
+
+        mockMvc.perform(get("/decks/1/import/preview").session(session))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("4, 7")))
+                .andExpect(content().string(containsString("200")));
+    }
 }

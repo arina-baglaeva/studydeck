@@ -10,12 +10,15 @@
        th:text="'Добавлено карточек: ' + ${addedCount}">Добавлено карточек: 0</p>
     <p class="notice notice-warning" th:if="${badLines != null and !#lists.isEmpty(badLines)}"
        th:text="'Пропущены строки: ' + ${#strings.listJoin(badLines, ', ')}">Пропущены строки</p>
+    <p class="notice notice-warning" th:if="${tooLongLines != null and !#lists.isEmpty(tooLongLines)}"
+       th:text="'Пропущены слишком длинные строки: ' + ${#strings.listJoin(tooLongLines, ', ')}">Длинные строки</p>
     <p class="notice notice-error" th:if="${importError != null}" th:text="${importError}">Ошибка</p>
     <p>Каждая строка — одна карточка: <code>термин - определение</code>.
         Разделители: <code>-</code>, <code>—</code>, <code>:</code>, <code>;</code>, табуляция.
         В файле <code>.csv</code> первая колонка — термин, вторая — определение.
         Пустые строки и повторы терминов пропускаются, а перед сохранением вы увидите список карточек.</p>
     <p class="muted" th:text="'Файл .txt или .csv в UTF-8, до 1 МБ и не больше ' + ${maxLines} + ' строк.'">Ограничения</p>
+    <p class="muted" th:text="'Термин — до ' + ${termMaxLength} + ' символов, определение — до ' + ${definitionMaxLength} + '.'">Длина</p>
     <form class="form" method="post" enctype="multipart/form-data"
           th:action="@{/decks/{id}/import(id=${deckId})}">
         <div class="form-field">

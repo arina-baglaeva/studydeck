@@ -2,6 +2,7 @@ package com.studydeck.service;
 
 import com.studydeck.dto.ParseResult;
 import com.studydeck.dto.ParsedCard;
+import com.studydeck.model.Card;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -201,5 +202,37 @@ class CardFileParserTest {
         assertThat(parser.parseFile("words.txt", text).getCards())
                 .extracting(ParsedCard::getTerm)
                 .containsExactly("bug,ошибка");
+    }
+
+    @Test
+    void termAtLimitIsAcceptedAndOverLimitIsTooLong() {
+        String termAtLimit = "a".repeat(Card.TERM_MAX_LENGTH);
+        String termOverLimit = "b".repeat(Card.TERM_MAX_LENGTH + 1);
+
+        ParseResult result = parser.parse(termAtLimit + " - ok\n" + termOverLimit + " - too long\nbroken line");
+
+        assertThat(result.getCards()).extracting(ParsedCard::getTerm).containsExactly(termAtLimit);
+        assertThat(result.getTooLongLines()).containsExactly(2);
+        assertThat(result.getBadLines()).containsExactly(3);
+    }
+
+    @Test
+    void tooLongDefinitionInCsvIsReported() {
+        String longDefinition = "d".repeat(Card.DEFINITION_MAX_LENGTH + 1);
+
+        ParseResult result = parser.parseCsv("bug,ошибка\nfix," + longDefinition);
+
+        assertThat(result.getCards()).hasSize(1);
+        assertThat(result.getTooLongLines()).containsExactly(2);
+    }
+
+    @Test
+    void lengthIsCheckedAfterCleaningSpaces() {
+        String term = "a".repeat(Card.TERM_MAX_LENGTH - 2) + "     " + "b";
+
+        ParseResult result = parser.parse(term + " - definition");
+
+        assertThat(result.getTooLongLines()).isEmpty();
+        assertThat(result.getCards()).hasSize(1);
     }
 }

@@ -79,13 +79,14 @@ class CardImportServiceTest {
     }
 
     @Test
-    void tooLongTermIsReportedAsBadLine() {
+    void tooLongTermIsReportedSeparately() {
         String longTerm = "x".repeat(com.studydeck.model.Card.TERM_MAX_LENGTH + 1);
 
         ParseResult result = service.readFile(file("words.txt", "bug - ошибка\n" + longTerm + " - слишком длинно"));
 
         assertThat(result.getCards()).hasSize(1);
-        assertThat(result.getBadLines()).containsExactly(2);
+        assertThat(result.getBadLines()).isEmpty();
+        assertThat(result.getTooLongLines()).containsExactly(2);
     }
 
     @Test

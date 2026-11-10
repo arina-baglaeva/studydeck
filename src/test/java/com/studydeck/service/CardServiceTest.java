@@ -187,4 +187,18 @@ class CardServiceTest {
     void escapeLikeEscapesSpecialCharacters() {
         assertThat(CardService.escapeLike("50%_!")).isEqualTo("50!%!_!!");
     }
+
+    @Test
+    void addCardsSkipsCardsOverLengthLimits() {
+        Deck deck = deckService.create("Limits", null);
+        List<ParsedCard> cards = List.of(
+                new ParsedCard("bug", "ошибка"),
+                new ParsedCard("x".repeat(Card.TERM_MAX_LENGTH + 1), "too long"),
+                new ParsedCard("fix", "y".repeat(Card.DEFINITION_MAX_LENGTH + 1)));
+
+        int added = cardService.addCards(deck.getId(), cards);
+
+        assertThat(added).isEqualTo(1);
+        assertThat(cardService.findByDeck(deck.getId())).extracting(Card::getTerm).containsExactly("bug");
+    }
 }

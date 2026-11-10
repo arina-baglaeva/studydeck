@@ -45,6 +45,12 @@ public class Card {
         this.definition = definition;
     }
 
+    public static boolean fitsLengthLimits(String term, String definition) {
+        return term != null && definition != null
+                && term.length() <= TERM_MAX_LENGTH
+                && definition.length() <= DEFINITION_MAX_LENGTH;
+    }
+
     @PrePersist
     void onCreate() {
         createdAt = LocalDateTime.now();

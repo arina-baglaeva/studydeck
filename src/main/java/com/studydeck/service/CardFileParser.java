@@ -25,8 +25,9 @@ public class CardFileParser {
     public ParseResult parse(String text) {
         List<ParsedCard> cards = new ArrayList<>();
         List<Integer> badLines = new ArrayList<>();
+        List<Integer> tooLongLines = new ArrayList<>();
         if (text == null) {
-            return new ParseResult(cards, badLines);
+            return new ParseResult(cards, badLines, tooLongLines);
         }
         String[] lines = text.split("\\R");
         for (int i = 0; i < lines.length; i++) {
@@ -34,13 +35,9 @@ public class CardFileParser {
                 continue;
             }
             ParsedCard card = parseLine(lines[i]);
-            if (card == null) {
-                badLines.add(i + 1);
-            } else {
-                cards.add(card);
-            }
+            sortCard(card, i + 1, cards, badLines, tooLongLines);
         }
-        return new ParseResult(cards, badLines);
+        return new ParseResult(cards, badLines, tooLongLines);
     }
 
     ParsedCard parseLine(String line) {
@@ -58,10 +55,18 @@ public class CardFileParser {
         if (term.isEmpty() || definition.isEmpty()) {
             return null;
         }
-        if (term.length() > Card.TERM_MAX_LENGTH || definition.length() > Card.DEFINITION_MAX_LENGTH) {
-            return null;
-        }
         return new ParsedCard(term, definition);
+    }
+
+    private void sortCard(ParsedCard card, int lineNumber, List<ParsedCard> cards,
+                          List<Integer> badLines, List<Integer> tooLongLines) {
+        if (card == null) {
+            badLines.add(lineNumber);
+        } else if (!Card.fitsLengthLimits(card.getTerm(), card.getDefinition())) {
+            tooLongLines.add(lineNumber);
+        } else {
+            cards.add(card);
+        }
     }
 
     String findDelimiter(String line) {
@@ -76,8 +81,9 @@ public class CardFileParser {
     public ParseResult parseCsv(String text) {
         List<ParsedCard> cards = new ArrayList<>();
         List<Integer> badLines = new ArrayList<>();
+        List<Integer> tooLongLines = new ArrayList<>();
         if (text == null) {
-            return new ParseResult(cards, badLines);
+            return new ParseResult(cards, badLines, tooLongLines);
         }
         String[] lines = text.split("\\R");
         char separator = 0;
@@ -92,13 +98,9 @@ public class CardFileParser {
                 }
             }
             ParsedCard card = parseCsvLine(lines[i], separator);
-            if (card == null) {
-                badLines.add(i + 1);
-            } else {
-                cards.add(card);
-            }
+            sortCard(card, i + 1, cards, badLines, tooLongLines);
         }
-        return new ParseResult(cards, badLines);
+        return new ParseResult(cards, badLines, tooLongLines);
     }
 
     ParsedCard parseCsvLine(String line, char separator) {

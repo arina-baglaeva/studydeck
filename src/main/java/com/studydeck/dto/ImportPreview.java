@@ -11,12 +11,19 @@ public class ImportPreview implements Serializable {
     private final Long deckId;
     private final List<ParsedCard> cards;
     private final List<Integer> badLines;
+    private final List<Integer> tooLongLines;
     private final int duplicateCount;
 
     public ImportPreview(Long deckId, List<ParsedCard> cards, List<Integer> badLines, int duplicateCount) {
+        this(deckId, cards, badLines, List.of(), duplicateCount);
+    }
+
+    public ImportPreview(Long deckId, List<ParsedCard> cards, List<Integer> badLines,
+                         List<Integer> tooLongLines, int duplicateCount) {
         this.deckId = deckId;
         this.cards = List.copyOf(cards);
         this.badLines = List.copyOf(badLines);
+        this.tooLongLines = List.copyOf(tooLongLines);
         this.duplicateCount = duplicateCount;
     }
 
@@ -30,6 +37,10 @@ public class ImportPreview implements Serializable {
 
     public List<Integer> getBadLines() {
         return badLines;
+    }
+
+    public List<Integer> getTooLongLines() {
+        return tooLongLines;
     }
 
     public int getDuplicateCount() {

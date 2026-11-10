@@ -4,6 +4,7 @@ import com.studydeck.dto.ImportPreview;
 import com.studydeck.dto.ParseResult;
 import com.studydeck.dto.ParsedCard;
 import com.studydeck.exception.ImportException;
+import com.studydeck.model.Card;
 import com.studydeck.service.CardImportService;
 import com.studydeck.service.CardService;
 import com.studydeck.service.DeckService;
@@ -53,7 +54,7 @@ public class ImportController {
             List<ParsedCard> newCards = cardService.withoutDuplicates(deckId, result.getCards());
             int duplicateCount = result.getCards().size() - newCards.size();
             session.setAttribute(PREVIEW_ATTRIBUTE,
-                    new ImportPreview(deckId, newCards, result.getBadLines(), duplicateCount));
+                    new ImportPreview(deckId, newCards, result.getBadLines(), result.getTooLongLines(), duplicateCount));
             return "redirect:/decks/" + deckId + "/import/preview";
         } catch (ImportException e) {
             model.addAttribute("importError", e.getMessage());
@@ -73,6 +74,7 @@ public class ImportController {
         }
         model.addAttribute("deckId", deckId);
         model.addAttribute("preview", preview);
+        addLengthLimits(model);
         return "import-preview";
     }
 
@@ -96,6 +98,7 @@ public class ImportController {
         session.removeAttribute(PREVIEW_ATTRIBUTE);
         redirectAttributes.addFlashAttribute("addedCount", added);
         redirectAttributes.addFlashAttribute("badLines", preview.getBadLines());
+        redirectAttributes.addFlashAttribute("tooLongLines", preview.getTooLongLines());
         return "redirect:/decks/" + deckId + "/import";
     }
 
@@ -113,9 +116,15 @@ public class ImportController {
         return null;
     }
 
+    private void addLengthLimits(Model model) {
+        model.addAttribute("termMaxLength", Card.TERM_MAX_LENGTH);
+        model.addAttribute("definitionMaxLength", Card.DEFINITION_MAX_LENGTH);
+    }
+
     private void prepareForm(Model model, Long deckId) {
         model.addAttribute("deck", deckService.getById(deckId));
         model.addAttribute("deckId", deckId);
         model.addAttribute("maxLines", CardImportService.MAX_LINES);
+        addLengthLimits(model);
     }
 }

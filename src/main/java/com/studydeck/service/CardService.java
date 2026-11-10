@@ -71,12 +71,19 @@ public class CardService {
     public int addCards(Long deckId, List<ParsedCard> parsedCards) {
         Deck deck = deckService.getById(deckId);
         List<ParsedCard> newCards = withoutDuplicates(deckId, parsedCards);
+        int added = 0;
         for (ParsedCard parsedCard : newCards) {
-            Card card = new Card(TextUtils.clean(parsedCard.getTerm()), TextUtils.clean(parsedCard.getDefinition()));
+            String term = TextUtils.clean(parsedCard.getTerm());
+            String definition = TextUtils.clean(parsedCard.getDefinition());
+            if (term.isEmpty() || definition.isEmpty() || !Card.fitsLengthLimits(term, definition)) {
+                continue;
+            }
+            Card card = new Card(term, definition);
             deck.addCard(card);
             cardRepository.save(card);
+            added++;
         }
-        return newCards.size();
+        return added;
     }
 
     @Transactional(readOnly = true)

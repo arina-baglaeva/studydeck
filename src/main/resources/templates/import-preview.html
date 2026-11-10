@@ -12,6 +12,8 @@
        th:text="'Пропущено дубликатов: ' + ${preview.duplicateCount}">Пропущено дубликатов</p>
     <p class="notice notice-warning" th:if="${!#lists.isEmpty(preview.badLines)}"
        th:text="'Не удалось разобрать строки: ' + ${#strings.listJoin(preview.badLines, ', ')}">Плохие строки</p>
+    <p class="notice notice-warning" th:if="${!#lists.isEmpty(preview.tooLongLines)}"
+       th:text="'Слишком длинные строки (термин до ' + ${termMaxLength} + ', определение до ' + ${definitionMaxLength} + ' символов): ' + ${#strings.listJoin(preview.tooLongLines, ', ')}">Длинные строки</p>
     <p class="empty" th:if="${#lists.isEmpty(preview.cards)}">В файле нет новых карточек для этой колоды.</p>
     <form method="post" th:action="@{/decks/{id}/import/confirm(id=${deckId})}"
           th:unless="${#lists.isEmpty(preview.cards)}">
