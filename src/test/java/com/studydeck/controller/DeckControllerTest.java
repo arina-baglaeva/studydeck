@@ -189,6 +189,16 @@ class DeckControllerTest {
     }
 
     @Test
+    void deckPageLinksToStudyMode() throws Exception {
+        when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
+        when(cardService.search(1L, null)).thenReturn(List.of(new Card("JVM", "машина")));
+
+        mockMvc.perform(get("/decks/1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("href=\"/decks/1/study\"")));
+    }
+
+    @Test
     void searchWithoutResultsShowsMessage() throws Exception {
         when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
         when(cardService.search(1L, "xyz")).thenReturn(List.of());

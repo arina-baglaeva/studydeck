@@ -267,3 +267,60 @@ main {
 .muted {
     color: var(--muted);
 }
+
+.study {
+    max-width: 560px;
+}
+
+.study-progress {
+    color: var(--muted);
+}
+
+.study-card {
+    min-height: 220px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+.study-face {
+    padding: 24px;
+    text-align: center;
+}
+
+.study-back {
+    display: none;
+}
+
+.study-card.flipped .study-front {
+    display: none;
+}
+
+.study-card.flipped .study-back {
+    display: block;
+}
+
+.study-label {
+    font-size: 14px;
+    color: var(--muted);
+}
+
+.study-text {
+    margin: 12px 0 0;
+    font-size: 22px;
+    overflow-wrap: anywhere;
+    white-space: pre-line;
+}
+
+.study-nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.button:disabled {
+    opacity: 0.5;
+    cursor: default;
+}

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Изучение: ' + ${deck.title})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container">
+    <p><a th:href="@{/decks/{id}(id=${deckId})}">← К колоде</a></p>
+    <h1 class="deck-title" th:text="${deck.title}">Колода</h1>
+    <p class="empty" th:if="${#lists.isEmpty(cards)}">
+        В колоде нет карточек.
+        <a th:href="@{/decks/{id}/cards/new(id=${deckId})}">Добавьте первую</a>, чтобы начать учить.
+    </p>
+    <div class="study" th:unless="${#lists.isEmpty(cards)}">
+        <p class="study-progress">
+            Карточка <span id="study-position">1</span> из <span th:text="${#lists.size(cards)}">1</span>
+        </p>
+        <div class="study-card" th:each="card, stat : ${cards}" th:hidden="${!stat.first}">
+            <div class="study-face study-front">
+                <span class="study-label">Термин</span>
+                <p class="study-text" th:text="${card.term}">Термин</p>
+            </div>
+            <div class="study-face study-back">
+                <span class="study-label">Определение</span>
+                <p class="study-text" th:text="${card.definition}">Определение</p>
+            </div>
+        </div>
+        <div class="study-nav">
+            <button class="button" type="button" id="study-prev">← Назад</button>
+            <button class="button" type="button" id="study-flip">Показать определение</button>
+            <button class="button" type="button" id="study-next">Далее →</button>
+        </div>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<script th:src="@{/js/study.js}" defer></script>
+</body>
+</html>
