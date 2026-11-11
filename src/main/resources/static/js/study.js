@@ -9,9 +9,16 @@ document.addEventListener("DOMContentLoaded", function () {
     const flipButton = document.getElementById("study-flip");
     let current = 0;
 
+    function setFlipped(card, flipped) {
+        card.classList.toggle("flipped", flipped);
+        card.querySelector(".study-front").setAttribute("aria-hidden", String(flipped));
+        card.querySelector(".study-back").setAttribute("aria-hidden", String(!flipped));
+        flipButton.textContent = flipped ? "Показать термин" : "Показать определение";
+    }
+
     function show(index) {
         cards[current].hidden = true;
-        cards[current].classList.remove("flipped");
+        setFlipped(cards[current], false);
         current = index;
         cards[current].hidden = false;
         position.textContent = String(current + 1);
@@ -20,7 +27,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function flip() {
-        cards[current].classList.toggle("flipped");
+        const card = cards[current];
+        setFlipped(card, !card.classList.contains("flipped"));
     }
 
     prevButton.addEventListener("click", function () {
@@ -37,8 +45,20 @@ document.addEventListener("DOMContentLoaded", function () {
 
     flipButton.addEventListener("click", flip);
 
+    cards.forEach(function (card) {
+        card.addEventListener("click", flip);
+    });
+
+    function isFlipKey(event) {
+        const onControl = event.target.tagName === "BUTTON" || event.target.tagName === "A";
+        return (event.key === " " || event.key === "Enter") && !onControl;
+    }
+
     document.addEventListener("keydown", function (event) {
-        if (event.key === "ArrowLeft" && current > 0) {
+        if (isFlipKey(event)) {
+            event.preventDefault();
+            flip();
+        } else if (event.key === "ArrowLeft" && current > 0) {
             show(current - 1);
         } else if (event.key === "ArrowRight" && current < cards.length - 1) {
             show(current + 1);

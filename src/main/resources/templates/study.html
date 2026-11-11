@@ -14,16 +14,20 @@
         <p class="study-progress">
             Карточка <span id="study-position">1</span> из <span th:text="${#lists.size(cards)}">1</span>
         </p>
-        <div class="study-card" th:each="card, stat : ${cards}" th:hidden="${!stat.first}">
-            <div class="study-face study-front">
-                <span class="study-label">Термин</span>
-                <p class="study-text" th:text="${card.term}">Термин</p>
-            </div>
-            <div class="study-face study-back">
-                <span class="study-label">Определение</span>
-                <p class="study-text" th:text="${card.definition}">Определение</p>
+        <div class="study-card" th:each="card, stat : ${cards}" th:hidden="${!stat.first}"
+             role="button" tabindex="0" aria-label="Перевернуть карточку">
+            <div class="study-inner">
+                <div class="study-face study-front">
+                    <span class="study-label">Термин</span>
+                    <p class="study-text" th:text="${card.term}">Термин</p>
+                </div>
+                <div class="study-face study-back" aria-hidden="true">
+                    <span class="study-label">Определение</span>
+                    <p class="study-text" th:text="${card.definition}">Определение</p>
+                </div>
             </div>
         </div>
+        <p class="muted">Нажмите на карточку или пробел, чтобы перевернуть. Стрелки ← → листают карточки.</p>
         <div class="study-nav">
             <button class="button" type="button" id="study-prev">← Назад</button>
             <button class="button" type="button" id="study-flip">Показать определение</button>

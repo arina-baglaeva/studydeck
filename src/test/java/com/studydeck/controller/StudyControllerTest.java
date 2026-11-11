@@ -71,6 +71,20 @@ class StudyControllerTest {
     }
 
     @Test
+    void cardHasFrontAndBackForFlipping() throws Exception {
+        when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
+        when(cardService.findByDeck(1L)).thenReturn(List.of(new Card("JVM", "машина")));
+
+        mockMvc.perform(get("/decks/1/study"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("class=\"study-inner\"")))
+                .andExpect(content().string(containsString("class=\"study-face study-front\"")))
+                .andExpect(content().string(containsString("class=\"study-face study-back\" aria-hidden=\"true\"")))
+                .andExpect(content().string(containsString("tabindex=\"0\"")))
+                .andExpect(content().string(containsString("id=\"study-flip\"")));
+    }
+
+    @Test
     void emptyDeckShowsMessage() throws Exception {
         when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
         when(cardService.findByDeck(1L)).thenReturn(List.of());
