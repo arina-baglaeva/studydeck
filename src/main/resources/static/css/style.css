@@ -345,6 +345,36 @@ main {
     margin-top: 16px;
 }
 
+.study-answer {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.study-answer .button {
+    flex: 1;
+}
+
+.button-known {
+    background: #2e7d4f;
+}
+
+.button-unknown {
+    background: #b23b3b;
+}
+
+.study-score {
+    color: var(--muted);
+}
+
+.study-card[data-answer="known"] .study-face {
+    border-color: #2e7d4f;
+}
+
+.study-card[data-answer="unknown"] .study-face {
+    border-color: #b23b3b;
+}
+
 .button:disabled {
     opacity: 0.5;
     cursor: default;

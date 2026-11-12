@@ -85,6 +85,29 @@ class StudyControllerTest {
     }
 
     @Test
+    void studyPageHasKnownAndUnknownButtons() throws Exception {
+        when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
+        when(cardService.findByDeck(1L)).thenReturn(List.of(new Card("JVM", "машина")));
+
+        mockMvc.perform(get("/decks/1/study"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("id=\"study-known\"")))
+                .andExpect(content().string(containsString("id=\"study-unknown\"")))
+                .andExpect(content().string(containsString("id=\"study-known-count\"")))
+                .andExpect(content().string(containsString("id=\"study-unknown-count\"")));
+    }
+
+    @Test
+    void emptyDeckHasNoAnswerButtons() throws Exception {
+        when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
+        when(cardService.findByDeck(1L)).thenReturn(List.of());
+
+        mockMvc.perform(get("/decks/1/study"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("id=\"study-known\""))));
+    }
+
+    @Test
     void emptyDeckShowsMessage() throws Exception {
         when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
         when(cardService.findByDeck(1L)).thenReturn(List.of());

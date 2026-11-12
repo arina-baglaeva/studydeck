@@ -7,6 +7,11 @@ document.addEventListener("DOMContentLoaded", function () {
     const prevButton = document.getElementById("study-prev");
     const nextButton = document.getElementById("study-next");
     const flipButton = document.getElementById("study-flip");
+    const knownButton = document.getElementById("study-known");
+    const unknownButton = document.getElementById("study-unknown");
+    const knownCount = document.getElementById("study-known-count");
+    const unknownCount = document.getElementById("study-unknown-count");
+    const answers = new Array(cards.length).fill(null);
     let current = 0;
 
     function setFlipped(card, flipped) {
@@ -30,6 +35,34 @@ document.addEventListener("DOMContentLoaded", function () {
         const card = cards[current];
         setFlipped(card, !card.classList.contains("flipped"));
     }
+
+    function countAnswers(value) {
+        return answers.filter(function (answer) {
+            return answer === value;
+        }).length;
+    }
+
+    function updateScore() {
+        knownCount.textContent = String(countAnswers("known"));
+        unknownCount.textContent = String(countAnswers("unknown"));
+    }
+
+    function mark(value) {
+        answers[current] = value;
+        cards[current].dataset.answer = value;
+        updateScore();
+        if (current < cards.length - 1) {
+            show(current + 1);
+        }
+    }
+
+    knownButton.addEventListener("click", function () {
+        mark("known");
+    });
+
+    unknownButton.addEventListener("click", function () {
+        mark("unknown");
+    });
 
     prevButton.addEventListener("click", function () {
         if (current > 0) {
