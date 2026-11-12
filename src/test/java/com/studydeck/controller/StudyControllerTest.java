@@ -3,8 +3,8 @@ package com.studydeck.controller;
 import com.studydeck.exception.NotFoundException;
 import com.studydeck.model.Card;
 import com.studydeck.model.Deck;
-import com.studydeck.service.CardService;
 import com.studydeck.service.DeckService;
+import com.studydeck.service.StudyService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -17,6 +17,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -34,12 +35,12 @@ class StudyControllerTest {
     private DeckService deckService;
 
     @MockBean
-    private CardService cardService;
+    private StudyService studyService;
 
     @Test
     void studyPageShowsTermsAndProgress() throws Exception {
         when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
-        when(cardService.findByDeck(1L)).thenReturn(List.of(
+        when(studyService.cardsForStudy(1L, false)).thenReturn(List.of(
                 new Card("JVM", "виртуальная машина Java"),
                 new Card("JDK", "набор для разработки")));
 
@@ -55,7 +56,7 @@ class StudyControllerTest {
     @Test
     void onlyFirstCardIsVisibleAtStart() throws Exception {
         when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
-        when(cardService.findByDeck(1L)).thenReturn(List.of(
+        when(studyService.cardsForStudy(1L, false)).thenReturn(List.of(
                 new Card("JVM", "машина"),
                 new Card("JDK", "набор")));
 
@@ -73,7 +74,7 @@ class StudyControllerTest {
     @Test
     void cardHasFrontAndBackForFlipping() throws Exception {
         when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
-        when(cardService.findByDeck(1L)).thenReturn(List.of(new Card("JVM", "машина")));
+        when(studyService.cardsForStudy(1L, false)).thenReturn(List.of(new Card("JVM", "машина")));
 
         mockMvc.perform(get("/decks/1/study"))
                 .andExpect(status().isOk())
@@ -87,7 +88,7 @@ class StudyControllerTest {
     @Test
     void studyPageHasKnownAndUnknownButtons() throws Exception {
         when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
-        when(cardService.findByDeck(1L)).thenReturn(List.of(new Card("JVM", "машина")));
+        when(studyService.cardsForStudy(1L, false)).thenReturn(List.of(new Card("JVM", "машина")));
 
         mockMvc.perform(get("/decks/1/study"))
                 .andExpect(status().isOk())
@@ -100,7 +101,7 @@ class StudyControllerTest {
     @Test
     void emptyDeckHasNoAnswerButtons() throws Exception {
         when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
-        when(cardService.findByDeck(1L)).thenReturn(List.of());
+        when(studyService.cardsForStudy(1L, false)).thenReturn(List.of());
 
         mockMvc.perform(get("/decks/1/study"))
                 .andExpect(status().isOk())
@@ -108,9 +109,40 @@ class StudyControllerTest {
     }
 
     @Test
+    void shuffleParameterIsPassedToService() throws Exception {
+        when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
+        when(studyService.cardsForStudy(1L, true)).thenReturn(List.of(new Card("JVM", "машина")));
+
+        mockMvc.perform(get("/decks/1/study").param("shuffle", "true"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("JVM")))
+                .andExpect(content().string(containsString("Перемешать ещё раз")))
+                .andExpect(content().string(containsString("По порядку")));
+
+        verify(studyService).cardsForStudy(1L, true);
+    }
+
+    @Test
+    void studyPageOffersShuffleLink() throws Exception {
+        when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
+        when(studyService.cardsForStudy(1L, false)).thenReturn(List.of(new Card("JVM", "машина")));
+
+        mockMvc.perform(get("/decks/1/study"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("/decks/1/study?shuffle=true")))
+                .andExpect(content().string(not(containsString("По порядку"))));
+    }
+
+    @Test
+    void invalidShuffleValueReturns404() throws Exception {
+        mockMvc.perform(get("/decks/1/study").param("shuffle", "maybe"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void emptyDeckShowsMessage() throws Exception {
         when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
-        when(cardService.findByDeck(1L)).thenReturn(List.of());
+        when(studyService.cardsForStudy(1L, false)).thenReturn(List.of());
 
         mockMvc.perform(get("/decks/1/study"))
                 .andExpect(status().isOk())
@@ -121,7 +153,7 @@ class StudyControllerTest {
     @Test
     void cardTextIsEscaped() throws Exception {
         when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
-        when(cardService.findByDeck(1L)).thenReturn(List.of(new Card("<b>x</b>", "<script>alert(1)</script>")));
+        when(studyService.cardsForStudy(1L, false)).thenReturn(List.of(new Card("<b>x</b>", "<script>alert(1)</script>")));
 
         mockMvc.perform(get("/decks/1/study"))
                 .andExpect(status().isOk())

@@ -11,6 +11,14 @@
         <a th:href="@{/decks/{id}/cards/new(id=${deckId})}">Добавьте первую</a>, чтобы начать учить.
     </p>
     <div class="study" th:unless="${#lists.isEmpty(cards)}">
+        <p class="study-options">
+            <a class="button" th:unless="${shuffle}"
+               th:href="@{/decks/{id}/study(id=${deckId},shuffle=true)}">Перемешать</a>
+            <a class="button" th:if="${shuffle}"
+               th:href="@{/decks/{id}/study(id=${deckId},shuffle=true)}">Перемешать ещё раз</a>
+            <a class="button" th:if="${shuffle}"
+               th:href="@{/decks/{id}/study(id=${deckId})}">По порядку</a>
+        </p>
         <p class="study-progress">
             Карточка <span id="study-position">1</span> из <span th:text="${#lists.size(cards)}">1</span>
         </p>
