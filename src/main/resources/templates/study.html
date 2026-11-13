@@ -29,8 +29,9 @@
             <a th:unless="${side.name() == 'DEFINITION'}"
                th:href="@{/decks/{id}/study(id=${deckId},shuffle=${shuffle},side='DEFINITION')}">определение</a>
         </p>
+        <div id="study-session">
         <p class="study-progress">
-            Карточка <span id="study-position">1</span> из <span th:text="${#lists.size(cards)}">1</span>
+            Карточка <span id="study-position">1</span> из <span id="study-total" th:text="${#lists.size(cards)}">1</span>
         </p>
         <div class="study-card" th:each="card, stat : ${cards}" th:hidden="${!stat.first}"
              role="button" tabindex="0" aria-label="Перевернуть карточку">
@@ -59,6 +60,24 @@
                     th:text="'Показать: ' + ${#strings.toLowerCase(side.backLabel)}">Показать определение</button>
             <button class="button" type="button" id="study-next">Далее →</button>
         </div>
+        </div>
+        <section class="study-summary" id="study-summary" hidden>
+            <h2 tabindex="-1">Сессия завершена</h2>
+            <p class="summary-result">
+                Знаю: <strong id="summary-known">0</strong> из <span id="summary-total">0</span>
+                (<span id="summary-percent">0</span>%)
+            </p>
+            <div class="summary-bar"><div class="summary-bar-fill" id="summary-bar-fill"></div></div>
+            <div id="summary-unknown-block" hidden>
+                <h3>Стоит повторить</h3>
+                <ul class="summary-unknown-list" id="summary-unknown-list"></ul>
+            </div>
+            <p class="study-options">
+                <button class="button button-unknown" type="button" id="summary-repeat">Повторить незнакомые</button>
+                <a class="button" th:href="@{/decks/{id}/study(id=${deckId},shuffle=${shuffle},side=${side})}">Начать заново</a>
+                <a class="button" th:href="@{/decks/{id}(id=${deckId})}">К колоде</a>
+            </p>
+        </section>
     </div>
 </main>
 <footer th:replace="~{fragments/layout :: footer}"></footer>

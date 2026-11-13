@@ -385,3 +385,40 @@ main {
     opacity: 0.5;
     cursor: default;
 }
+
+.study-summary {
+    padding: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+.study-summary h2 {
+    margin-top: 0;
+}
+
+.summary-result {
+    font-size: 18px;
+}
+
+.summary-bar {
+    height: 12px;
+    background: #f3dede;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.summary-bar-fill {
+    width: 0;
+    height: 100%;
+    background: #2e7d4f;
+}
+
+.summary-unknown-list {
+    padding-left: 20px;
+    overflow-wrap: anywhere;
+}
+
+.button[hidden] {
+    display: none;
+}

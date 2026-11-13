@@ -199,6 +199,41 @@ class StudyControllerTest {
     }
 
     @Test
+    void summaryScreenIsHiddenAtStart() throws Exception {
+        when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
+        when(studyService.cardsForStudy(1L, false)).thenReturn(List.of(new Card("JVM", "машина")));
+
+        mockMvc.perform(get("/decks/1/study"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("id=\"study-summary\" hidden")))
+                .andExpect(content().string(containsString("Сессия завершена")))
+                .andExpect(content().string(containsString("id=\"summary-percent\"")))
+                .andExpect(content().string(containsString("id=\"summary-unknown-list\"")))
+                .andExpect(content().string(containsString("id=\"summary-repeat\"")));
+    }
+
+    @Test
+    void summaryRestartLinkKeepsOptions() throws Exception {
+        when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
+        when(studyService.cardsForStudy(1L, true)).thenReturn(List.of(new Card("JVM", "машина")));
+
+        mockMvc.perform(get("/decks/1/study").param("shuffle", "true").param("side", "DEFINITION"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Начать заново")))
+                .andExpect(content().string(containsString("/decks/1/study?shuffle=true&amp;side=DEFINITION")));
+    }
+
+    @Test
+    void emptyDeckHasNoSummary() throws Exception {
+        when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
+        when(studyService.cardsForStudy(1L, false)).thenReturn(List.of());
+
+        mockMvc.perform(get("/decks/1/study"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("study-summary"))));
+    }
+
+    @Test
     void invalidSideReturns404() throws Exception {
         mockMvc.perform(get("/decks/1/study").param("side", "<script>"))
                 .andExpect(status().isNotFound());
