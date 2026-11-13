@@ -10,14 +10,24 @@
         В колоде нет карточек.
         <a th:href="@{/decks/{id}/cards/new(id=${deckId})}">Добавьте первую</a>, чтобы начать учить.
     </p>
-    <div class="study" th:unless="${#lists.isEmpty(cards)}">
+    <div class="study" th:unless="${#lists.isEmpty(cards)}"
+         th:data-front-label="${side.frontLabel}" th:data-back-label="${side.backLabel}">
         <p class="study-options">
             <a class="button" th:unless="${shuffle}"
-               th:href="@{/decks/{id}/study(id=${deckId},shuffle=true)}">Перемешать</a>
+               th:href="@{/decks/{id}/study(id=${deckId},shuffle=true,side=${side})}">Перемешать</a>
             <a class="button" th:if="${shuffle}"
-               th:href="@{/decks/{id}/study(id=${deckId},shuffle=true)}">Перемешать ещё раз</a>
+               th:href="@{/decks/{id}/study(id=${deckId},shuffle=true,side=${side})}">Перемешать ещё раз</a>
             <a class="button" th:if="${shuffle}"
-               th:href="@{/decks/{id}/study(id=${deckId})}">По порядку</a>
+               th:href="@{/decks/{id}/study(id=${deckId},side=${side})}">По порядку</a>
+        </p>
+        <p class="study-options study-side">
+            <span class="muted">Сначала показывать:</span>
+            <strong th:if="${side.name() == 'TERM'}">термин</strong>
+            <a th:unless="${side.name() == 'TERM'}"
+               th:href="@{/decks/{id}/study(id=${deckId},shuffle=${shuffle},side='TERM')}">термин</a>
+            <strong th:if="${side.name() == 'DEFINITION'}">определение</strong>
+            <a th:unless="${side.name() == 'DEFINITION'}"
+               th:href="@{/decks/{id}/study(id=${deckId},shuffle=${shuffle},side='DEFINITION')}">определение</a>
         </p>
         <p class="study-progress">
             Карточка <span id="study-position">1</span> из <span th:text="${#lists.size(cards)}">1</span>
@@ -26,12 +36,12 @@
              role="button" tabindex="0" aria-label="Перевернуть карточку">
             <div class="study-inner">
                 <div class="study-face study-front">
-                    <span class="study-label">Термин</span>
-                    <p class="study-text" th:text="${card.term}">Термин</p>
+                    <span class="study-label" th:text="${side.frontLabel}">Термин</span>
+                    <p class="study-text" th:text="${side.front(card)}">Термин</p>
                 </div>
                 <div class="study-face study-back" aria-hidden="true">
-                    <span class="study-label">Определение</span>
-                    <p class="study-text" th:text="${card.definition}">Определение</p>
+                    <span class="study-label" th:text="${side.backLabel}">Определение</span>
+                    <p class="study-text" th:text="${side.back(card)}">Определение</p>
                 </div>
             </div>
         </div>
@@ -45,7 +55,8 @@
         <p class="muted">Нажмите на карточку или пробел, чтобы перевернуть. Стрелки ← → листают карточки.</p>
         <div class="study-nav">
             <button class="button" type="button" id="study-prev">← Назад</button>
-            <button class="button" type="button" id="study-flip">Показать определение</button>
+            <button class="button" type="button" id="study-flip"
+                    th:text="'Показать: ' + ${#strings.toLowerCase(side.backLabel)}">Показать определение</button>
             <button class="button" type="button" id="study-next">Далее →</button>
         </div>
     </div>

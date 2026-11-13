@@ -1,5 +1,6 @@
 package com.studydeck.controller;
 
+import com.studydeck.model.StudySide;
 import com.studydeck.service.DeckService;
 import com.studydeck.service.StudyService;
 import org.springframework.stereotype.Controller;
@@ -22,10 +23,12 @@ public class StudyController {
     @GetMapping("/decks/{deckId}/study")
     public String study(@PathVariable Long deckId,
                         @RequestParam(defaultValue = "false") boolean shuffle,
+                        @RequestParam(defaultValue = "TERM") StudySide side,
                         Model model) {
         model.addAttribute("deck", deckService.getById(deckId));
         model.addAttribute("deckId", deckId);
         model.addAttribute("shuffle", shuffle);
+        model.addAttribute("side", side);
         model.addAttribute("cards", studyService.cardsForStudy(deckId, shuffle));
         return "study";
     }

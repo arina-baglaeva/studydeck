@@ -3,6 +3,9 @@ document.addEventListener("DOMContentLoaded", function () {
     if (cards.length === 0) {
         return;
     }
+    const study = document.querySelector(".study");
+    const frontLabel = study.dataset.frontLabel.toLowerCase();
+    const backLabel = study.dataset.backLabel.toLowerCase();
     const position = document.getElementById("study-position");
     const prevButton = document.getElementById("study-prev");
     const nextButton = document.getElementById("study-next");
@@ -18,7 +21,7 @@ document.addEventListener("DOMContentLoaded", function () {
         card.classList.toggle("flipped", flipped);
         card.querySelector(".study-front").setAttribute("aria-hidden", String(flipped));
         card.querySelector(".study-back").setAttribute("aria-hidden", String(!flipped));
-        flipButton.textContent = flipped ? "Показать термин" : "Показать определение";
+        flipButton.textContent = "Показать: " + (flipped ? frontLabel : backLabel);
     }
 
     function show(index) {

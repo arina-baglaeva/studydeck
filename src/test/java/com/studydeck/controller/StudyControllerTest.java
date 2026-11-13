@@ -162,6 +162,49 @@ class StudyControllerTest {
     }
 
     @Test
+    void termIsShownFirstByDefault() throws Exception {
+        when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
+        when(studyService.cardsForStudy(1L, false)).thenReturn(List.of(new Card("JVM", "машина")));
+
+        String html = mockMvc.perform(get("/decks/1/study"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        assertTrue(html.indexOf("JVM") < html.indexOf("машина"));
+        assertTrue(html.contains("/decks/1/study?shuffle=false&amp;side=DEFINITION"));
+    }
+
+    @Test
+    void definitionSideShowsDefinitionFirst() throws Exception {
+        when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
+        when(studyService.cardsForStudy(1L, false)).thenReturn(List.of(new Card("JVM", "машина")));
+
+        String html = mockMvc.perform(get("/decks/1/study").param("side", "DEFINITION"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        assertTrue(html.indexOf("машина") < html.indexOf("JVM"));
+        assertTrue(html.contains("data-front-label=\"Определение\""));
+        assertTrue(html.contains("/decks/1/study?shuffle=false&amp;side=TERM"));
+    }
+
+    @Test
+    void shuffleLinkKeepsChosenSide() throws Exception {
+        when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
+        when(studyService.cardsForStudy(1L, false)).thenReturn(List.of(new Card("JVM", "машина")));
+
+        mockMvc.perform(get("/decks/1/study").param("side", "DEFINITION"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("/decks/1/study?shuffle=true&amp;side=DEFINITION")));
+    }
+
+    @Test
+    void invalidSideReturns404() throws Exception {
+        mockMvc.perform(get("/decks/1/study").param("side", "<script>"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void missingDeckReturns404() throws Exception {
         when(deckService.getById(999L)).thenThrow(new NotFoundException("Колода не найдена"));
 
