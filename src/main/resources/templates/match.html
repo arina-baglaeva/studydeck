@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Соедини: ' + ${deck.title})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container">
+    <p><a th:href="@{/decks/{id}(id=${deckId})}">← К колоде</a></p>
+    <h1 class="deck-title" th:text="${deck.title}">Колода</h1>
+    <p class="empty" th:unless="${game.playable}">
+        Для игры нужно хотя бы <span th:text="${minPairs}">2</span> карточки с разными терминами и определениями.
+        <a th:href="@{/decks/{id}/cards/new(id=${deckId})}">Добавить карточку</a>
+    </p>
+    <section class="match" th:if="${game.playable}">
+        <p class="muted">
+            Соедините каждый термин с его определением. Пар в игре: <span th:text="${game.pairCount}">6</span>.
+        </p>
+        <div class="match-board">
+            <div class="match-column">
+                <h2 class="match-heading">Термины</h2>
+                <button class="match-item" type="button" th:each="item : ${game.terms}"
+                        th:data-pair="${item.pairKey}" th:text="${item.text}">Термин</button>
+            </div>
+            <div class="match-column">
+                <h2 class="match-heading">Определения</h2>
+                <button class="match-item" type="button" th:each="item : ${game.definitions}"
+                        th:data-pair="${item.pairKey}" th:text="${item.text}">Определение</button>
+            </div>
+        </div>
+        <p class="study-options">
+            <a class="button" th:href="@{/decks/{id}/match(id=${deckId})}">Новая игра</a>
+        </p>
+    </section>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>
