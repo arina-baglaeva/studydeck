@@ -454,6 +454,24 @@ main {
     cursor: pointer;
 }
 
+.match-item.selected {
+    border-color: var(--accent);
+    background: #eef0fc;
+}
+
+.match-item.matched {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.match-status {
+    color: var(--muted);
+}
+
+.match-done {
+    font-weight: 600;
+}
+
 .match-item:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;

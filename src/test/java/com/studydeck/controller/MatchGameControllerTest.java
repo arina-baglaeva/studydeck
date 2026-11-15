@@ -54,6 +54,21 @@ class MatchGameControllerTest {
     }
 
     @Test
+    void matchPageIncludesGameScriptAndStatus() throws Exception {
+        when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
+        when(matchGameService.newGame(1L)).thenReturn(new MatchGame(
+                List.of(new MatchItem(1, "JVM"), new MatchItem(2, "JDK")),
+                List.of(new MatchItem(2, "набор"), new MatchItem(1, "машина"))));
+
+        mockMvc.perform(get("/decks/1/match"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("/js/match.js")))
+                .andExpect(content().string(containsString("data-side=\"term\"")))
+                .andExpect(content().string(containsString("data-side=\"definition\"")))
+                .andExpect(content().string(containsString("id=\"match-found\"")));
+    }
+
+    @Test
     void notPlayableGameShowsMessage() throws Exception {
         when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
         when(matchGameService.newGame(1L)).thenReturn(new MatchGame(

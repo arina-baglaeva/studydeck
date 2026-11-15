@@ -15,22 +15,27 @@
             Соедините каждый термин с его определением. Пар в игре: <span th:text="${game.pairCount}">6</span>.
         </p>
         <div class="match-board">
-            <div class="match-column">
+            <div class="match-column" data-side="term">
                 <h2 class="match-heading">Термины</h2>
                 <button class="match-item" type="button" th:each="item : ${game.terms}"
                         th:data-pair="${item.pairKey}" th:text="${item.text}">Термин</button>
             </div>
-            <div class="match-column">
+            <div class="match-column" data-side="definition">
                 <h2 class="match-heading">Определения</h2>
                 <button class="match-item" type="button" th:each="item : ${game.definitions}"
                         th:data-pair="${item.pairKey}" th:text="${item.text}">Определение</button>
             </div>
         </div>
+        <p class="match-status" id="match-status" aria-live="polite">
+            Найдено пар: <span id="match-found">0</span> из <span th:text="${game.pairCount}">6</span>
+        </p>
+        <p class="match-done" id="match-done" hidden tabindex="-1">Все пары найдены!</p>
         <p class="study-options">
             <a class="button" th:href="@{/decks/{id}/match(id=${deckId})}">Новая игра</a>
         </p>
     </section>
 </main>
 <footer th:replace="~{fragments/layout :: footer}"></footer>
+<script th:src="@{/js/match.js}" defer></script>
 </body>
 </html>
