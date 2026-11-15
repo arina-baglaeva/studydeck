@@ -8,11 +8,43 @@ document.addEventListener("DOMContentLoaded", function () {
     const doneMessage = document.getElementById("match-done");
     const mistakesCount = document.getElementById("match-mistakes");
     const feedback = document.getElementById("match-feedback");
+    const timer = document.getElementById("match-timer");
+    const finalTime = document.getElementById("match-final-time");
     const wrongDelay = 700;
     const selected = { term: null, definition: null };
     let found = 0;
     let mistakes = 0;
     let locked = false;
+    let startedAt = null;
+    let timerId = null;
+
+    function formatTime(milliseconds) {
+        const totalSeconds = Math.floor(milliseconds / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return String(minutes).padStart(2, "0") + ":" + String(seconds).padStart(2, "0");
+    }
+
+    function elapsed() {
+        return Date.now() - startedAt;
+    }
+
+    function updateTimer() {
+        timer.textContent = formatTime(elapsed());
+    }
+
+    function startTimer() {
+        if (startedAt !== null) {
+            return;
+        }
+        startedAt = Date.now();
+        timerId = setInterval(updateTimer, 250);
+    }
+
+    function stopTimer() {
+        clearInterval(timerId);
+        updateTimer();
+    }
 
     function sideOf(item) {
         return item.closest(".match-column").dataset.side;
@@ -39,6 +71,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function finishGame() {
+        stopTimer();
+        finalTime.textContent = formatTime(elapsed());
         doneMessage.hidden = false;
         doneMessage.focus();
     }
@@ -81,6 +115,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (locked) {
             return;
         }
+        startTimer();
         const side = sideOf(item);
         if (selected[side] === item) {
             setSelected(item, false);

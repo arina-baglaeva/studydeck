@@ -496,6 +496,11 @@ main {
     color: var(--muted);
 }
 
+.match-timer {
+    font-size: 1.25rem;
+    font-variant-numeric: tabular-nums;
+}
+
 .match-done {
     font-weight: 600;
 }
