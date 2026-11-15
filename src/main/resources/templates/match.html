@@ -27,7 +27,9 @@
             </div>
         </div>
         <p class="match-status" id="match-status" aria-live="polite">
-            Найдено пар: <span id="match-found">0</span> из <span th:text="${game.pairCount}">6</span>
+            Найдено пар: <span id="match-found">0</span> из <span th:text="${game.pairCount}">6</span>,
+            ошибок: <span id="match-mistakes">0</span>
+            <span class="match-feedback" id="match-feedback"></span>
         </p>
         <p class="match-done" id="match-done" hidden tabindex="-1">Все пары найдены!</p>
         <p class="study-options">

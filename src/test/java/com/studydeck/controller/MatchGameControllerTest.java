@@ -65,7 +65,9 @@ class MatchGameControllerTest {
                 .andExpect(content().string(containsString("/js/match.js")))
                 .andExpect(content().string(containsString("data-side=\"term\"")))
                 .andExpect(content().string(containsString("data-side=\"definition\"")))
-                .andExpect(content().string(containsString("id=\"match-found\"")));
+                .andExpect(content().string(containsString("id=\"match-found\"")))
+                .andExpect(content().string(containsString("id=\"match-mistakes\"")))
+                .andExpect(content().string(containsString("id=\"match-feedback\"")));
     }
 
     @Test

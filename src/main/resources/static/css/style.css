@@ -460,8 +460,36 @@ main {
 }
 
 .match-item.matched {
-    opacity: 0.5;
+    opacity: 0.6;
     cursor: default;
+}
+
+.match-item.correct {
+    border-color: #2e9e5b;
+    background: #e6f6ec;
+}
+
+.match-item.wrong {
+    border-color: #d64545;
+    background: #fdeaea;
+    animation: match-shake 0.3s;
+}
+
+@keyframes match-shake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-4px);
+    }
+    75% {
+        transform: translateX(4px);
+    }
+}
+
+.match-feedback {
+    display: block;
+    font-weight: 600;
 }
 
 .match-status {
@@ -475,6 +503,12 @@ main {
 .match-item:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .match-item.wrong {
+        animation: none;
+    }
 }
 
 @media (max-width: 600px) {

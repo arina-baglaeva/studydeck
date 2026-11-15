@@ -6,8 +6,13 @@ document.addEventListener("DOMContentLoaded", function () {
     const items = board.querySelectorAll(".match-item");
     const foundCount = document.getElementById("match-found");
     const doneMessage = document.getElementById("match-done");
+    const mistakesCount = document.getElementById("match-mistakes");
+    const feedback = document.getElementById("match-feedback");
+    const wrongDelay = 700;
     const selected = { term: null, definition: null };
     let found = 0;
+    let mistakes = 0;
+    let locked = false;
 
     function sideOf(item) {
         return item.closest(".match-column").dataset.side;
@@ -29,13 +34,28 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function markMatched(item) {
         setSelected(item, false);
-        item.classList.add("matched");
+        item.classList.add("matched", "correct");
         item.disabled = true;
     }
 
     function finishGame() {
         doneMessage.hidden = false;
         doneMessage.focus();
+    }
+
+    function showWrong(term, definition) {
+        locked = true;
+        mistakes = mistakes + 1;
+        mistakesCount.textContent = String(mistakes);
+        feedback.textContent = "Неверно, попробуйте ещё раз";
+        term.classList.add("wrong");
+        definition.classList.add("wrong");
+        setTimeout(function () {
+            term.classList.remove("wrong");
+            definition.classList.remove("wrong");
+            clearSelection();
+            locked = false;
+        }, wrongDelay);
     }
 
     function checkPair() {
@@ -48,15 +68,19 @@ document.addEventListener("DOMContentLoaded", function () {
             selected.definition = null;
             found = found + 1;
             foundCount.textContent = String(found);
+            feedback.textContent = "Верно!";
             if (found === items.length / 2) {
                 finishGame();
             }
         } else {
-            clearSelection();
+            showWrong(term, definition);
         }
     }
 
     function choose(item) {
+        if (locked) {
+            return;
+        }
         const side = sideOf(item);
         if (selected[side] === item) {
             setSelected(item, false);
