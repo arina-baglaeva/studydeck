@@ -35,6 +35,9 @@ public class Deck {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column
+    private Long bestMatchTimeMillis;
+
     @OneToMany(mappedBy = "deck", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("id ASC")
     private List<Card> cards = new ArrayList<>();
@@ -62,6 +65,14 @@ public class Deck {
         card.setDeck(null);
     }
 
+    public boolean recordMatchTime(long timeMillis) {
+        if (bestMatchTimeMillis != null && bestMatchTimeMillis <= timeMillis) {
+            return false;
+        }
+        bestMatchTimeMillis = timeMillis;
+        return true;
+    }
+
     public Long getId() {
         return id;
     }
@@ -84,6 +95,10 @@ public class Deck {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public Long getBestMatchTimeMillis() {
+        return bestMatchTimeMillis;
     }
 
     public List<Card> getCards() {

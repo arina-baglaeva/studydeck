@@ -1,6 +1,7 @@
 package com.studydeck.service;
 
 import com.studydeck.dto.DeckSummary;
+import com.studydeck.dto.MatchResult;
 import com.studydeck.exception.NotFoundException;
 import com.studydeck.model.Deck;
 import com.studydeck.repository.DeckRepository;
@@ -46,6 +47,13 @@ public class DeckService {
         deck.setTitle(TextUtils.clean(title));
         deck.setDescription(TextUtils.cleanOrNull(description));
         return deck;
+    }
+
+    @Transactional
+    public MatchResult recordMatchTime(Long id, long timeMillis) {
+        Deck deck = getById(id);
+        boolean newRecord = deck.recordMatchTime(timeMillis);
+        return new MatchResult(deck.getBestMatchTimeMillis(), newRecord);
     }
 
     @Transactional

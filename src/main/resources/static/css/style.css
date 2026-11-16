@@ -501,6 +501,17 @@ main {
     font-variant-numeric: tabular-nums;
 }
 
+.match-best {
+    margin-left: 16px;
+    color: var(--muted);
+}
+
+.match-record {
+    margin-left: 8px;
+    font-weight: bold;
+    color: #2e9e5b;
+}
+
 .match-done {
     font-weight: 600;
 }

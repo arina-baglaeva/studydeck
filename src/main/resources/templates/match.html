@@ -14,8 +14,12 @@
         <p class="muted">
             Соедините каждый термин с его определением. Пар в игре: <span th:text="${game.pairCount}">6</span>.
         </p>
-        <p class="match-timer">Время: <span id="match-timer" aria-live="off">00:00</span></p>
-        <div class="match-board">
+        <p class="match-timer">
+            Время: <span id="match-timer" aria-live="off">00:00</span>
+            <span class="match-best">Лучшее время: <span id="match-best"
+                    th:text="${bestTime != null} ? ${bestTime} : 'ещё нет'">ещё нет</span></span>
+        </p>
+        <div class="match-board" th:data-result-url="@{/decks/{id}/match/result(id=${deckId})}">
             <div class="match-column" data-side="term">
                 <h2 class="match-heading">Термины</h2>
                 <button class="match-item" type="button" th:each="item : ${game.terms}"
@@ -34,6 +38,7 @@
         </p>
         <p class="match-done" id="match-done" hidden tabindex="-1">
             Все пары найдены! Ваше время: <span id="match-final-time">00:00</span>
+            <span class="match-record" id="match-record" hidden>Новый рекорд!</span>
         </p>
         <p class="study-options">
             <a class="button" th:href="@{/decks/{id}/match(id=${deckId})}">Новая игра</a>

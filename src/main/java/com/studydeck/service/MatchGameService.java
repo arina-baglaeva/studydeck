@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Random;
 import java.util.Set;
 
@@ -17,6 +16,9 @@ import java.util.Set;
 public class MatchGameService {
 
     public static final int MAX_PAIRS = 6;
+    public static final long MIN_TIME_MILLIS = 1000;
+    public static final long MAX_TIME_MILLIS = 60 * 60 * 1000;
+    public static final long CLOCK_TOLERANCE_MILLIS = 2000;
 
     private final CardService cardService;
     private final Random random = new Random();
@@ -41,6 +43,12 @@ public class MatchGameService {
         return new MatchGame(terms, definitions);
     }
 
+    public boolean isAcceptableTime(long timeMillis, long serverElapsedMillis) {
+        return timeMillis >= MIN_TIME_MILLIS
+                && timeMillis <= MAX_TIME_MILLIS
+                && timeMillis <= serverElapsedMillis + CLOCK_TOLERANCE_MILLIS;
+    }
+
     private List<Card> pickUniquePairs(List<Card> cards) {
         List<Card> chosen = new ArrayList<>();
         Set<String> usedTerms = new HashSet<>();
@@ -49,8 +57,8 @@ public class MatchGameService {
             if (chosen.size() == MAX_PAIRS) {
                 break;
             }
-            String term = normalize(card.getTerm());
-            String definition = normalize(card.getDefinition());
+            String term = TextUtils.normalize(card.getTerm());
+            String definition = TextUtils.normalize(card.getDefinition());
             if (!usedTerms.contains(term) && !usedDefinitions.contains(definition)) {
                 usedTerms.add(term);
                 usedDefinitions.add(definition);
@@ -58,9 +66,5 @@ public class MatchGameService {
             }
         }
         return chosen;
-    }
-
-    private String normalize(String text) {
-        return TextUtils.clean(text).toLowerCase(Locale.ROOT);
     }
 }

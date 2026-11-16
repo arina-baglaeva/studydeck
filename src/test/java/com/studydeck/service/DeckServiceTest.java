@@ -1,5 +1,6 @@
 package com.studydeck.service;
 
+import com.studydeck.dto.MatchResult;
 import com.studydeck.exception.NotFoundException;
 import com.studydeck.model.Deck;
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,46 @@ class DeckServiceTest {
         Deck updated = deckService.getById(deck.getId());
         assertThat(updated.getTitle()).isEqualTo("New");
         assertThat(updated.getDescription()).isEqualTo("Описание");
+    }
+
+    @Test
+    void firstMatchTimeBecomesRecord() {
+        Deck deck = deckService.create("Java", null);
+
+        MatchResult result = deckService.recordMatchTime(deck.getId(), 42_000);
+
+        assertThat(result.isNewRecord()).isTrue();
+        assertThat(result.getBestTimeMillis()).isEqualTo(42_000);
+        assertThat(result.getBestTime()).isEqualTo("00:42");
+        assertThat(deckService.getById(deck.getId()).getBestMatchTimeMillis()).isEqualTo(42_000);
+    }
+
+    @Test
+    void slowerMatchTimeKeepsRecord() {
+        Deck deck = deckService.create("Java", null);
+        deckService.recordMatchTime(deck.getId(), 30_000);
+
+        MatchResult result = deckService.recordMatchTime(deck.getId(), 50_000);
+
+        assertThat(result.isNewRecord()).isFalse();
+        assertThat(result.getBestTimeMillis()).isEqualTo(30_000);
+    }
+
+    @Test
+    void fasterMatchTimeReplacesRecord() {
+        Deck deck = deckService.create("Java", null);
+        deckService.recordMatchTime(deck.getId(), 30_000);
+
+        MatchResult result = deckService.recordMatchTime(deck.getId(), 25_500);
+
+        assertThat(result.isNewRecord()).isTrue();
+        assertThat(result.getBestTime()).isEqualTo("00:25");
+    }
+
+    @Test
+    void recordMatchTimeForMissingDeckThrowsNotFound() {
+        assertThatThrownBy(() -> deckService.recordMatchTime(999L, 10_000))
+                .isInstanceOf(NotFoundException.class);
     }
 
     @Test

@@ -10,6 +10,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const feedback = document.getElementById("match-feedback");
     const timer = document.getElementById("match-timer");
     const finalTime = document.getElementById("match-final-time");
+    const bestTime = document.getElementById("match-best");
+    const recordMessage = document.getElementById("match-record");
     const wrongDelay = 700;
     const selected = { term: null, definition: null };
     let found = 0;
@@ -70,11 +72,42 @@ document.addEventListener("DOMContentLoaded", function () {
         item.disabled = true;
     }
 
+    function csrfHeaders() {
+        const token = document.querySelector("meta[name='_csrf']");
+        const header = document.querySelector("meta[name='_csrf_header']");
+        const headers = { "Content-Type": "application/x-www-form-urlencoded" };
+        if (token !== null && header !== null) {
+            headers[header.content] = token.content;
+        }
+        return headers;
+    }
+
+    function showResult(result) {
+        bestTime.textContent = result.bestTime;
+        recordMessage.hidden = !result.newRecord;
+    }
+
+    function saveResult(timeMillis) {
+        fetch(board.dataset.resultUrl, {
+            method: "POST",
+            headers: csrfHeaders(),
+            body: new URLSearchParams({ timeMillis: String(timeMillis) })
+        }).then(function (response) {
+            if (response.ok) {
+                return response.json().then(showResult);
+            }
+        }).catch(function () {
+            feedback.textContent = "Не удалось сохранить результат";
+        });
+    }
+
     function finishGame() {
         stopTimer();
-        finalTime.textContent = formatTime(elapsed());
+        const timeMillis = elapsed();
+        finalTime.textContent = formatTime(timeMillis);
         doneMessage.hidden = false;
         doneMessage.focus();
+        saveResult(timeMillis);
     }
 
     function showWrong(term, definition) {

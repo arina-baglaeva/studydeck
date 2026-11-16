@@ -127,6 +127,34 @@ class MatchGameServiceTest {
                 .isInstanceOf(NotFoundException.class);
     }
 
+    @Test
+    void normalTimeIsAccepted() {
+        assertThat(matchGameService.isAcceptableTime(15_000, 20_000)).isTrue();
+    }
+
+    @Test
+    void tooFastTimeIsRejected() {
+        assertThat(matchGameService.isAcceptableTime(500, 20_000)).isFalse();
+        assertThat(matchGameService.isAcceptableTime(-1, 20_000)).isFalse();
+    }
+
+    @Test
+    void tooLongTimeIsRejected() {
+        long tooLong = MatchGameService.MAX_TIME_MILLIS + 1;
+
+        assertThat(matchGameService.isAcceptableTime(tooLong, tooLong * 2)).isFalse();
+    }
+
+    @Test
+    void timeLongerThanServerElapsedIsRejected() {
+        assertThat(matchGameService.isAcceptableTime(60_000, 10_000)).isFalse();
+    }
+
+    @Test
+    void smallClockDifferenceIsAllowed() {
+        assertThat(matchGameService.isAcceptableTime(11_000, 10_000)).isTrue();
+    }
+
     private Deck createDeckWithCards(int count) {
         Deck deck = deckService.create("Deck", null);
         for (int i = 1; i <= count; i++) {

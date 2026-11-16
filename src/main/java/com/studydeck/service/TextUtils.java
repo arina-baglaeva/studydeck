@@ -1,5 +1,7 @@
 package com.studydeck.service;
 
+import java.util.Locale;
+
 public final class TextUtils {
 
     private TextUtils() {
@@ -10,6 +12,10 @@ public final class TextUtils {
             return "";
         }
         return text.trim().replaceAll("\\s+", " ");
+    }
+
+    public static String normalize(String text) {
+        return clean(text).toLowerCase(Locale.ROOT);
     }
 
     public static String cleanOrNull(String text) {
