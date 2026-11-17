@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Тест: ' + ${deck.title})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container">
+    <p><a th:href="@{/decks/{id}(id=${deckId})}">← К колоде</a></p>
+    <h1 class="deck-title" th:text="${deck.title}">Колода</h1>
+    <p class="empty" th:if="${#lists.isEmpty(questions)}">
+        Для теста нужно хотя бы <span th:text="${minCards}">4</span> карточки с разными определениями.
+        <a th:href="@{/decks/{id}/cards/new(id=${deckId})}">Добавить карточку</a>
+    </p>
+    <form class="quiz" method="post" th:unless="${#lists.isEmpty(questions)}"
+          th:action="@{/decks/{id}/quiz(id=${deckId})}">
+        <p class="muted">
+            Выберите правильное определение для каждого термина. Вопросов: <span th:text="${#lists.size(questions)}">10</span>.
+        </p>
+        <fieldset class="quiz-question" th:each="question, stat : ${questions}">
+            <legend>
+                <span class="quiz-number" th:text="${stat.count} + '.'">1.</span>
+                <span th:text="${question.term}">Термин</span>
+            </legend>
+            <label class="quiz-option" th:each="option, optionStat : ${question.options}">
+                <input type="radio" th:name="'answer' + ${stat.index}" th:value="${optionStat.index}">
+                <span th:text="${option}">Вариант</span>
+            </label>
+        </fieldset>
+        <p class="form-actions">
+            <button class="button" type="submit">Проверить</button>
+            <a th:href="@{/decks/{id}/quiz(id=${deckId})}">Новый тест</a>
+        </p>
+    </form>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

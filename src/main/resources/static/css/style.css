@@ -537,3 +537,39 @@ main {
         font-size: 0.9rem;
     }
 }
+
+.quiz-question {
+    margin: 0 0 16px;
+    padding: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+.quiz-question legend {
+    padding: 0 4px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.quiz-number {
+    color: var(--muted);
+}
+
+.quiz-option {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    padding: 8px;
+    border-radius: 8px;
+    overflow-wrap: anywhere;
+    cursor: pointer;
+}
+
+.quiz-option:hover {
+    background: var(--bg);
+}
+
+.quiz-option input {
+    margin-top: 4px;
+}

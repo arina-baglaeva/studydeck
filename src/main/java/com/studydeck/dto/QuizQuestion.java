@@ -1,8 +1,9 @@
 package com.studydeck.dto;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class QuizQuestion {
+public class QuizQuestion implements Serializable {
 
     private final Long cardId;
     private final String term;
