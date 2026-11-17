@@ -1,6 +1,8 @@
 package com.studydeck.service;
 
+import com.studydeck.dto.QuizAnswer;
 import com.studydeck.dto.QuizQuestion;
+import com.studydeck.dto.QuizResult;
 import com.studydeck.model.Card;
 import org.springframework.stereotype.Service;
 
@@ -39,6 +41,25 @@ public class QuizService {
             }
         }
         return questions;
+    }
+
+    public QuizResult check(List<QuizQuestion> questions, List<Integer> chosenIndexes) {
+        List<QuizAnswer> answers = new ArrayList<>();
+        for (int i = 0; i < questions.size(); i++) {
+            Integer chosenIndex = i < chosenIndexes.size() ? chosenIndexes.get(i) : null;
+            answers.add(checkAnswer(questions.get(i), chosenIndex));
+        }
+        return new QuizResult(answers);
+    }
+
+    private QuizAnswer checkAnswer(QuizQuestion question, Integer chosenIndex) {
+        boolean validIndex = chosenIndex != null && chosenIndex >= 0 && chosenIndex < question.getOptions().size();
+        if (!validIndex) {
+            return new QuizAnswer(question.getTerm(), null, question.getCorrectAnswer(), false);
+        }
+        String chosenAnswer = question.getOptions().get(chosenIndex);
+        return new QuizAnswer(question.getTerm(), chosenAnswer, question.getCorrectAnswer(),
+                question.isCorrect(chosenIndex));
     }
 
     private QuizQuestion createQuestion(Card card, List<String> wrongOptions) {

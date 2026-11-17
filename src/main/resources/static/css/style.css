@@ -573,3 +573,20 @@ main {
 .quiz-option input {
     margin-top: 4px;
 }
+
+.quiz-review {
+    padding-left: 20px;
+    overflow-wrap: anywhere;
+}
+
+.quiz-review li {
+    margin-bottom: 12px;
+}
+
+.quiz-right .quiz-mark {
+    color: #2e7d4f;
+}
+
+.quiz-wrong .quiz-mark {
+    color: #b23b3b;
+}

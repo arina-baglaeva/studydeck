@@ -1,6 +1,7 @@
 package com.studydeck.service;
 
 import com.studydeck.dto.QuizQuestion;
+import com.studydeck.dto.QuizResult;
 import com.studydeck.exception.NotFoundException;
 import com.studydeck.model.Deck;
 import org.junit.jupiter.api.Test;
@@ -8,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -131,6 +133,76 @@ class QuizServiceTest {
     void missingDeckThrowsNotFound() {
         assertThatThrownBy(() -> quizService.newQuiz(999L))
                 .isInstanceOf(NotFoundException.class);
+    }
+
+    @Test
+    void checkCountsCorrectAnswers() {
+        List<QuizQuestion> questions = List.of(question("JVM", 0), question("JDK", 1), question("JRE", 2));
+
+        QuizResult result = quizService.check(questions, List.of(0, 3, 2));
+
+        assertThat(result.getTotal()).isEqualTo(3);
+        assertThat(result.getCorrectCount()).isEqualTo(2);
+        assertThat(result.getPercent()).isEqualTo(66);
+        assertThat(result.getAnswers().get(0).isCorrect()).isTrue();
+        assertThat(result.getAnswers().get(1).isCorrect()).isFalse();
+    }
+
+    @Test
+    void checkKeepsChosenAndCorrectAnswers() {
+        QuizResult result = quizService.check(List.of(question("JVM", 1)), List.of(2));
+
+        assertThat(result.getAnswers().get(0).getTerm()).isEqualTo("JVM");
+        assertThat(result.getAnswers().get(0).getChosenAnswer()).isEqualTo("option2");
+        assertThat(result.getAnswers().get(0).getCorrectAnswer()).isEqualTo("option1");
+        assertThat(result.getAnswers().get(0).isAnswered()).isTrue();
+    }
+
+    @Test
+    void missingAnswerIsWrongAndNotAnswered() {
+        QuizResult result = quizService.check(List.of(question("JVM", 0)), Arrays.asList((Integer) null));
+
+        assertThat(result.getCorrectCount()).isZero();
+        assertThat(result.getAnswers().get(0).isAnswered()).isFalse();
+    }
+
+    @Test
+    void outOfRangeIndexIsTreatedAsNoAnswer() {
+        List<QuizQuestion> questions = List.of(question("JVM", 0), question("JDK", 0));
+
+        QuizResult result = quizService.check(questions, List.of(-1, 4));
+
+        assertThat(result.getCorrectCount()).isZero();
+        assertThat(result.getAnswers()).noneMatch(answer -> answer.isAnswered());
+    }
+
+    @Test
+    void fewerAnswersThanQuestionsAreTreatedAsNoAnswer() {
+        List<QuizQuestion> questions = List.of(question("JVM", 0), question("JDK", 0));
+
+        QuizResult result = quizService.check(questions, List.of(0));
+
+        assertThat(result.getCorrectCount()).isEqualTo(1);
+        assertThat(result.getAnswers().get(1).isAnswered()).isFalse();
+    }
+
+    @Test
+    void allCorrectGivesHundredPercent() {
+        QuizResult result = quizService.check(List.of(question("JVM", 3)), List.of(3));
+
+        assertThat(result.getPercent()).isEqualTo(100);
+    }
+
+    @Test
+    void emptyQuizGivesZeroPercent() {
+        QuizResult result = quizService.check(List.of(), List.of());
+
+        assertThat(result.getTotal()).isZero();
+        assertThat(result.getPercent()).isZero();
+    }
+
+    private QuizQuestion question(String term, int correctIndex) {
+        return new QuizQuestion(1L, term, List.of("option0", "option1", "option2", "option3"), correctIndex);
     }
 
     private Deck createDeckWithCards(int count) {

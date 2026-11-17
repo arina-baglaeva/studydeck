@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Результат теста: ' + ${deck.title})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container">
+    <p><a th:href="@{/decks/{id}(id=${deckId})}">← К колоде</a></p>
+    <h1 class="deck-title" th:text="${deck.title}">Колода</h1>
+    <section class="study-summary">
+        <h2>Результат теста</h2>
+        <p class="summary-result">
+            Правильно: <span th:text="${result.correctCount}">7</span> из <span th:text="${result.total}">10</span>
+            (<span th:text="${result.percent} + '%'">70%</span>)
+        </p>
+        <div class="summary-bar">
+            <div class="summary-bar-fill" th:style="'width: ' + ${result.percent} + '%'"></div>
+        </div>
+        <ol class="quiz-review">
+            <li th:each="answer : ${result.answers}" th:classappend="${answer.correct} ? 'quiz-right' : 'quiz-wrong'">
+                <strong th:text="${answer.term}">Термин</strong>
+                <span class="quiz-mark" th:text="${answer.correct} ? '— верно' : '— ошибка'">— верно</span>
+                <div th:unless="${answer.correct}">
+                    <span class="muted">Ваш ответ:</span>
+                    <span th:text="${answer.answered} ? ${answer.chosenAnswer} : 'нет ответа'">ответ</span>
+                </div>
+                <div th:unless="${answer.correct}">
+                    <span class="muted">Правильно:</span>
+                    <span th:text="${answer.correctAnswer}">ответ</span>
+                </div>
+            </li>
+        </ol>
+        <p class="study-options">
+            <a class="button" th:href="@{/decks/{id}/quiz(id=${deckId})}">Пройти ещё раз</a>
+            <a th:href="@{/decks/{id}(id=${deckId})}">Вернуться к колоде</a>
+        </p>
+    </section>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>
