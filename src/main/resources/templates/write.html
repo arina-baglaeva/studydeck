@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Напиши ответ: ' + ${deck.title})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container">
+    <p><a th:href="@{/decks/{id}(id=${deckId})}">← К колоде</a></p>
+    <h1 class="deck-title" th:text="${deck.title}">Колода</h1>
+    <p class="empty" th:if="${#lists.isEmpty(questions)}">
+        В колоде пока нет карточек.
+        <a th:href="@{/decks/{id}/cards/new(id=${deckId})}">Добавить карточку</a>
+    </p>
+    <form class="quiz" method="post" autocomplete="off" th:unless="${#lists.isEmpty(questions)}"
+          th:action="@{/decks/{id}/write(id=${deckId})}">
+        <p class="muted">
+            Напишите термин по определению. Регистр и лишние пробелы не важны.
+            Вопросов: <span th:text="${#lists.size(questions)}">10</span>.
+        </p>
+        <div class="quiz-question" th:each="question, stat : ${questions}">
+            <label class="write-prompt" th:for="'answer' + ${stat.index}">
+                <span class="quiz-number" th:text="${stat.count} + '.'">1.</span>
+                <span th:text="${question.prompt}">Определение</span>
+            </label>
+            <input class="write-input" type="text" th:id="'answer' + ${stat.index}"
+                   th:name="'answer' + ${stat.index}" th:maxlength="${answerMaxLength}" spellcheck="false">
+        </div>
+        <p class="form-actions">
+            <button class="button" type="submit">Проверить</button>
+            <a th:href="@{/decks/{id}/write(id=${deckId})}">Новые вопросы</a>
+        </p>
+    </form>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

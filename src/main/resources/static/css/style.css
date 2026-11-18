@@ -590,3 +590,18 @@ main {
 .quiz-wrong .quiz-mark {
     color: #b23b3b;
 }
+
+.write-prompt {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.write-input {
+    width: 100%;
+    padding: 8px;
+    font: inherit;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}

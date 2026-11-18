@@ -7,7 +7,7 @@
     <p><a th:href="@{/decks/{id}(id=${deckId})}">← К колоде</a></p>
     <h1 class="deck-title" th:text="${deck.title}">Колода</h1>
     <section class="study-summary">
-        <h2>Результат теста</h2>
+        <h2 th:text="${mode == 'write'} ? 'Результат: напиши ответ' : 'Результат теста'">Результат теста</h2>
         <p class="summary-result">
             Правильно: <span th:text="${result.correctCount}">7</span> из <span th:text="${result.total}">10</span>
             (<span th:text="${result.percent} + '%'">70%</span>)
@@ -30,7 +30,7 @@
             </li>
         </ol>
         <p class="study-options">
-            <a class="button" th:href="@{/decks/{id}/quiz(id=${deckId})}">Пройти ещё раз</a>
+            <a class="button" th:href="${mode == 'write'} ? @{/decks/{id}/write(id=${deckId})} : @{/decks/{id}/quiz(id=${deckId})}">Пройти ещё раз</a>
             <a th:href="@{/decks/{id}(id=${deckId})}">Вернуться к колоде</a>
         </p>
     </section>
