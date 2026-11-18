@@ -2,7 +2,9 @@ package com.studydeck.service;
 
 import com.studydeck.dto.QuizQuestion;
 import com.studydeck.dto.QuizResult;
+import com.studydeck.dto.WriteQuestion;
 import com.studydeck.exception.NotFoundException;
+import com.studydeck.model.Card;
 import com.studydeck.model.Deck;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -199,6 +201,130 @@ class QuizServiceTest {
 
         assertThat(result.getTotal()).isZero();
         assertThat(result.getPercent()).isZero();
+    }
+
+    @Test
+    void writeQuizAsksDefinitionAndExpectsTerm() {
+        Deck deck = createDeckWithCards(3);
+
+        List<WriteQuestion> questions = quizService.newWriteQuiz(deck.getId());
+
+        assertThat(questions).hasSize(3);
+        for (WriteQuestion question : questions) {
+            String number = question.getAnswer().substring("term".length());
+            assertThat(question.getPrompt()).isEqualTo("definition" + number);
+        }
+    }
+
+    @Test
+    void writeQuizWorksWithOneCard() {
+        Deck deck = createDeckWithCards(1);
+
+        assertThat(quizService.newWriteQuiz(deck.getId())).hasSize(1);
+    }
+
+    @Test
+    void writeQuizHasAtMostTenQuestions() {
+        Deck deck = createDeckWithCards(25);
+
+        assertThat(quizService.newWriteQuiz(deck.getId())).hasSize(QuizService.MAX_QUESTIONS);
+    }
+
+    @Test
+    void writeQuizSkipsRepeatedDefinition() {
+        Deck deck = deckService.create("Deck", null);
+        cardService.addCard(deck.getId(), "JVM", "машина");
+        cardService.addCard(deck.getId(), "JRE", " Машина ");
+
+        assertThat(quizService.newWriteQuiz(deck.getId())).hasSize(1);
+    }
+
+    @Test
+    void writeQuizForMissingDeckThrowsNotFound() {
+        assertThatThrownBy(() -> quizService.newWriteQuiz(999L))
+                .isInstanceOf(NotFoundException.class);
+    }
+
+    @Test
+    void sameAnswerIgnoresCaseAndExtraSpaces() {
+        assertThat(QuizService.isSameAnswer("  java   virtual MACHINE ", "Java Virtual Machine")).isTrue();
+        assertThat(QuizService.isSameAnswer("ПОЛИМОРФИЗМ", "полиморфизм")).isTrue();
+        assertThat(QuizService.isSameAnswer("java\tvirtual\nmachine","Java Virtual Machine")).isTrue();
+    }
+
+    @Test
+    void differentAnswerIsWrong() {
+        assertThat(QuizService.isSameAnswer("JDK", "JVM")).isFalse();
+        assertThat(QuizService.isSameAnswer("JavaVirtualMachine", "Java Virtual Machine")).isFalse();
+    }
+
+    @Test
+    void emptyOrMissingAnswerIsWrong() {
+        assertThat(QuizService.isSameAnswer(null, "JVM")).isFalse();
+        assertThat(QuizService.isSameAnswer("", "JVM")).isFalse();
+        assertThat(QuizService.isSameAnswer("   ", "JVM")).isFalse();
+    }
+
+    @Test
+    void tooLongAnswerIsWrong() {
+        String expected = "a".repeat(Card.TERM_MAX_LENGTH);
+        String typed = expected + " ".repeat(Card.TERM_MAX_LENGTH);
+
+        assertThat(QuizService.isSameAnswer(expected, expected)).isTrue();
+        assertThat(QuizService.isSameAnswer(typed, expected)).isFalse();
+    }
+
+    @Test
+    void checkWrittenCountsCorrectAnswers() {
+        List<WriteQuestion> questions = List.of(writeQuestion("машина", "JVM"), writeQuestion("набор", "JDK"));
+
+        QuizResult result = quizService.checkWritten(questions, List.of(" jvm ", "JRE"));
+
+        assertThat(result.getCorrectCount()).isEqualTo(1);
+        assertThat(result.getPercent()).isEqualTo(50);
+        assertThat(result.getAnswers().get(0).isCorrect()).isTrue();
+        assertThat(result.getAnswers().get(1).isCorrect()).isFalse();
+    }
+
+    @Test
+    void checkWrittenKeepsPromptTypedAndCorrectAnswers() {
+        QuizResult result = quizService.checkWritten(List.of(writeQuestion("машина", "JVM")), List.of("  JRE   x "));
+
+        assertThat(result.getAnswers().get(0).getTerm()).isEqualTo("машина");
+        assertThat(result.getAnswers().get(0).getChosenAnswer()).isEqualTo("JRE x");
+        assertThat(result.getAnswers().get(0).getCorrectAnswer()).isEqualTo("JVM");
+    }
+
+    @Test
+    void blankWrittenAnswerIsNotAnswered() {
+        QuizResult result = quizService.checkWritten(List.of(writeQuestion("машина", "JVM")), List.of("   "));
+
+        assertThat(result.getAnswers().get(0).isAnswered()).isFalse();
+        assertThat(result.getCorrectCount()).isZero();
+    }
+
+    @Test
+    void fewerWrittenAnswersThanQuestionsAreNotAnswered() {
+        List<WriteQuestion> questions = List.of(writeQuestion("машина", "JVM"), writeQuestion("набор", "JDK"));
+
+        QuizResult result = quizService.checkWritten(questions, List.of("JVM"));
+
+        assertThat(result.getCorrectCount()).isEqualTo(1);
+        assertThat(result.getAnswers().get(1).isAnswered()).isFalse();
+    }
+
+    @Test
+    void tooLongWrittenAnswerIsCutForResultPage() {
+        String typed = "x".repeat(Card.TERM_MAX_LENGTH + 50);
+
+        QuizResult result = quizService.checkWritten(List.of(writeQuestion("машина", "JVM")), List.of(typed));
+
+        assertThat(result.getAnswers().get(0).getChosenAnswer()).hasSize(Card.TERM_MAX_LENGTH);
+        assertThat(result.getAnswers().get(0).isCorrect()).isFalse();
+    }
+
+    private WriteQuestion writeQuestion(String prompt, String answer) {
+        return new WriteQuestion(1L, prompt, answer);
     }
 
     private QuizQuestion question(String term, int correctIndex) {

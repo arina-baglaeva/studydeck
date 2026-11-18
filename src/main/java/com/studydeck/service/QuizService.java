@@ -3,6 +3,7 @@ package com.studydeck.service;
 import com.studydeck.dto.QuizAnswer;
 import com.studydeck.dto.QuizQuestion;
 import com.studydeck.dto.QuizResult;
+import com.studydeck.dto.WriteQuestion;
 import com.studydeck.model.Card;
 import org.springframework.stereotype.Service;
 
@@ -43,6 +44,39 @@ public class QuizService {
         return questions;
     }
 
+    public List<WriteQuestion> newWriteQuiz(Long deckId) {
+        List<Card> cards = new ArrayList<>(cardService.findByDeck(deckId));
+        Collections.shuffle(cards, random);
+        List<WriteQuestion> questions = new ArrayList<>();
+        Set<String> askedDefinitions = new HashSet<>();
+        for (Card card : cards) {
+            if (questions.size() == MAX_QUESTIONS) {
+                break;
+            }
+            if (askedDefinitions.add(TextUtils.normalize(card.getDefinition()))) {
+                questions.add(new WriteQuestion(card.getId(), card.getDefinition(), card.getTerm()));
+            }
+        }
+        return questions;
+    }
+
+    public QuizResult checkWritten(List<WriteQuestion> questions, List<String> typedAnswers) {
+        List<QuizAnswer> answers = new ArrayList<>();
+        for (int i = 0; i < questions.size(); i++) {
+            String typed = i < typedAnswers.size() ? typedAnswers.get(i) : null;
+            answers.add(checkWrittenAnswer(questions.get(i), typed));
+        }
+        return new QuizResult(answers);
+    }
+
+    public static boolean isSameAnswer(String typed, String expected) {
+        if (typed == null || typed.length() > Card.TERM_MAX_LENGTH) {
+            return false;
+        }
+        String cleanTyped = TextUtils.normalize(typed);
+        return !cleanTyped.isEmpty() && cleanTyped.equals(TextUtils.normalize(expected));
+    }
+
     public QuizResult check(List<QuizQuestion> questions, List<Integer> chosenIndexes) {
         List<QuizAnswer> answers = new ArrayList<>();
         for (int i = 0; i < questions.size(); i++) {
@@ -60,6 +94,15 @@ public class QuizService {
         String chosenAnswer = question.getOptions().get(chosenIndex);
         return new QuizAnswer(question.getTerm(), chosenAnswer, question.getCorrectAnswer(),
                 question.isCorrect(chosenIndex));
+    }
+
+    private QuizAnswer checkWrittenAnswer(WriteQuestion question, String typed) {
+        String shownAnswer = TextUtils.cleanOrNull(typed);
+        if (shownAnswer != null && shownAnswer.length() > Card.TERM_MAX_LENGTH) {
+            shownAnswer = shownAnswer.substring(0, Card.TERM_MAX_LENGTH);
+        }
+        return new QuizAnswer(question.getPrompt(), shownAnswer, question.getAnswer(),
+                isSameAnswer(typed, question.getAnswer()));
     }
 
     private QuizQuestion createQuestion(Card card, List<String> wrongOptions) {
