@@ -6,6 +6,9 @@ import com.studydeck.model.Deck;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+
+import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
@@ -18,6 +21,9 @@ class DeckRepositoryTest {
 
     @Autowired
     private CardRepository cardRepository;
+
+    @Autowired
+    private TestEntityManager entityManager;
 
     @Test
     void savesDeckWithCards() {
@@ -67,5 +73,27 @@ class DeckRepositoryTest {
         assertThat(deckRepository.findAllSummaries())
                 .extracting(DeckSummary::getTitle, DeckSummary::getCardCount)
                 .containsExactlyInAnyOrder(tuple("Java", 2L), tuple("Empty", 0L));
+    }
+
+    @Test
+    void savesReviewFieldsOfCard() {
+        Deck deck = new Deck("Java", null);
+        Card card = new Card("JVM", "машина");
+        card.setEaseFactor(2.2);
+        card.setIntervalDays(6);
+        card.setRepetitions(2);
+        card.setLapses(1);
+        card.setNextReviewAt(LocalDateTime.of(2026, 11, 25, 9, 0));
+        deck.addCard(card);
+        deckRepository.saveAndFlush(deck);
+        entityManager.clear();
+
+        Card loaded = cardRepository.findById(card.getId()).orElseThrow();
+
+        assertThat(loaded.getEaseFactor()).isEqualTo(2.2);
+        assertThat(loaded.getIntervalDays()).isEqualTo(6);
+        assertThat(loaded.getRepetitions()).isEqualTo(2);
+        assertThat(loaded.getLapses()).isEqualTo(1);
+        assertThat(loaded.getNextReviewAt()).isEqualTo(LocalDateTime.of(2026, 11, 25, 9, 0));
     }
 }
