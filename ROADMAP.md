@@ -58,8 +58,8 @@
 - [x] Unit-тесты `QuizService`
 
 ## Этап 7. Интервальное повторение (алгоритм SM-2)
-- [ ] Поля карточки: `easeFactor`, `intervalDays`, `repetitions`, `lapses`, `nextReviewAt`
-- [ ] Перечисление `Grade`: «Снова», «Трудно», «Хорошо», «Легко»
+- [x] Поля карточки: `easeFactor`, `intervalDays`, `repetitions`, `lapses`, `nextReviewAt`
+- [x] Перечисление `Grade`: «Снова», «Трудно», «Хорошо», «Легко»
 - [ ] `SpacedRepetitionService`: расчёт следующего интервала по SM-2
 - [ ] Шаги заучивания новой карточки: 10 минут → 1 день
 - [ ] Ошибка: карточка возвращается на шаги заучивания, `easeFactor` снижается (не ниже 1.3)
