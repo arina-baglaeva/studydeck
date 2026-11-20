@@ -81,6 +81,90 @@ class SpacedRepetitionServiceTest {
         assertThat(card.getIntervalDays()).isGreaterThan(2);
     }
 
+    @Test
+    void newCardGoesToTenMinuteStep() {
+        Card card = new Card("JVM", "машина");
+
+        service.review(card, Grade.GOOD, now);
+
+        assertThat(SpacedRepetitionService.isLearning(card)).isTrue();
+        assertThat(card.getNextReviewAt()).isEqualTo(now.plusMinutes(10));
+        assertThat(card.getRepetitions()).isZero();
+    }
+
+    @Test
+    void goodAfterTenMinuteStepGraduatesToOneDay() {
+        Card card = new Card("JVM", "машина");
+        service.review(card, Grade.GOOD, now);
+
+        service.review(card, Grade.GOOD, now.plusMinutes(10));
+
+        assertThat(SpacedRepetitionService.isLearning(card)).isFalse();
+        assertThat(card.getIntervalDays()).isEqualTo(1);
+        assertThat(card.getRepetitions()).isEqualTo(1);
+        assertThat(card.getNextReviewAt()).isEqualTo(now.plusMinutes(10).plusDays(1));
+    }
+
+    @Test
+    void easyNewCardSkipsTenMinuteStep() {
+        Card card = new Card("JVM", "машина");
+
+        service.review(card, Grade.EASY, now);
+
+        assertThat(card.getIntervalDays()).isEqualTo(1);
+        assertThat(card.getNextReviewAt()).isEqualTo(now.plusDays(1));
+    }
+
+    @Test
+    void againAndHardKeepCardOnLearningStep() {
+        Card again = new Card("JVM", "машина");
+        Card hard = new Card("JDK", "набор разработчика");
+        service.review(again, Grade.GOOD, now);
+        service.review(hard, Grade.GOOD, now);
+
+        service.review(again, Grade.AGAIN, now);
+        service.review(hard, Grade.HARD, now);
+
+        assertThat(SpacedRepetitionService.isLearning(again)).isTrue();
+        assertThat(SpacedRepetitionService.isLearning(hard)).isTrue();
+        assertThat(again.getNextReviewAt()).isEqualTo(now.plusMinutes(10));
+        assertThat(again.getLapses()).isZero();
+        assertThat(again.getEaseFactor()).isEqualTo(2.5);
+    }
+
+    @Test
+    void lapseReturnsCardToLearning() {
+        Card card = reviewedCard(4, 30, 2.5);
+
+        service.review(card, Grade.AGAIN, now);
+
+        assertThat(SpacedRepetitionService.isLearning(card)).isTrue();
+        assertThat(card.getLapses()).isEqualTo(1);
+        assertThat(card.getRepetitions()).isZero();
+        assertThat(card.getEaseFactor()).isCloseTo(2.3, within(0.001));
+        assertThat(card.getNextReviewAt()).isEqualTo(now.plusMinutes(10));
+    }
+
+    @Test
+    void lapseNeverPushesEaseFactorBelowMinimum() {
+        Card card = reviewedCard(4, 30, 1.4);
+
+        service.review(card, Grade.AGAIN, now);
+
+        assertThat(card.getEaseFactor()).isEqualTo(Card.MIN_EASE_FACTOR);
+    }
+
+    @Test
+    void lapsedCardGraduatesAgainAfterGood() {
+        Card card = reviewedCard(4, 30, 2.5);
+        service.review(card, Grade.AGAIN, now);
+
+        service.review(card, Grade.GOOD, now.plusMinutes(10));
+
+        assertThat(card.getIntervalDays()).isEqualTo(1);
+        assertThat(card.getLapses()).isEqualTo(1);
+    }
+
     private Card reviewedCard(int repetitions, int intervalDays, double easeFactor) {
         Card card = new Card("JVM", "виртуальная машина Java");
         card.setRepetitions(repetitions);

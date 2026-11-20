@@ -9,27 +9,52 @@ import java.time.LocalDateTime;
 @Service
 public class SpacedRepetitionService {
 
-    public static final int FIRST_INTERVAL_DAYS = 1;
+    public static final int LEARNING_STEP_MINUTES = 10;
+    public static final int GRADUATING_INTERVAL_DAYS = 1;
     public static final int SECOND_INTERVAL_DAYS = 6;
     public static final double HARD_MULTIPLIER = 1.2;
     public static final double EASY_BONUS = 1.3;
+    public static final double LAPSE_EASE_PENALTY = 0.2;
 
     public void review(Card card, Grade grade, LocalDateTime now) {
-        if (grade.isLapse()) {
-            restart(card, now);
-            return;
+        if (isLearning(card)) {
+            learn(card, grade, now);
+        } else if (grade.isLapse()) {
+            lapse(card, now);
+        } else {
+            reviewGraduated(card, grade, now);
         }
+    }
+
+    public static boolean isLearning(Card card) {
+        return card.getIntervalDays() == 0;
+    }
+
+    private void learn(Card card, Grade grade, LocalDateTime now) {
+        boolean graduates = grade == Grade.EASY || (grade == Grade.GOOD && !card.isNew());
+        if (graduates) {
+            card.setRepetitions(1);
+            card.setIntervalDays(GRADUATING_INTERVAL_DAYS);
+            card.setNextReviewAt(now.plusDays(GRADUATING_INTERVAL_DAYS));
+        } else {
+            card.setNextReviewAt(now.plusMinutes(LEARNING_STEP_MINUTES));
+        }
+    }
+
+    private void lapse(Card card, LocalDateTime now) {
+        card.setLapses(card.getLapses() + 1);
+        card.setEaseFactor(card.getEaseFactor() - LAPSE_EASE_PENALTY);
+        card.setRepetitions(0);
+        card.setIntervalDays(0);
+        card.setNextReviewAt(now.plusMinutes(LEARNING_STEP_MINUTES));
+    }
+
+    private void reviewGraduated(Card card, Grade grade, LocalDateTime now) {
         card.setEaseFactor(newEaseFactor(card.getEaseFactor(), grade));
         int interval = nextInterval(card, grade);
         card.setRepetitions(card.getRepetitions() + 1);
         card.setIntervalDays(interval);
         card.setNextReviewAt(now.plusDays(interval));
-    }
-
-    private void restart(Card card, LocalDateTime now) {
-        card.setRepetitions(0);
-        card.setIntervalDays(FIRST_INTERVAL_DAYS);
-        card.setNextReviewAt(now.plusDays(FIRST_INTERVAL_DAYS));
     }
 
     static double newEaseFactor(double easeFactor, Grade grade) {
@@ -39,14 +64,11 @@ public class SpacedRepetitionService {
     }
 
     private int nextInterval(Card card, Grade grade) {
-        if (card.getRepetitions() == 0) {
-            return FIRST_INTERVAL_DAYS;
-        }
-        int current = Math.max(1, card.getIntervalDays());
+        int current = card.getIntervalDays();
         int interval;
         if (grade == Grade.HARD) {
             interval = (int) Math.round(current * HARD_MULTIPLIER);
-        } else if (card.getRepetitions() == 1) {
+        } else if (card.getRepetitions() <= 1) {
             interval = SECOND_INTERVAL_DAYS;
         } else {
             interval = (int) Math.round(current * card.getEaseFactor());
