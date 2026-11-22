@@ -1,9 +1,11 @@
 package com.studydeck.service;
 
 import com.studydeck.model.Card;
+import com.studydeck.model.Deck;
 import com.studydeck.model.Grade;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Random;
@@ -215,6 +217,76 @@ class SpacedRepetitionServiceTest {
         lowest.review(card, Grade.HARD, now);
 
         assertThat(card.getIntervalDays()).isGreaterThan(3);
+    }
+
+    @Test
+    void examDateCapsIntervalTwoDaysBefore() {
+        Card card = reviewedCard(4, 30, 2.5);
+        deckWithExam(LocalDate.of(2026, 12, 10)).addCard(card);
+
+        service.review(card, Grade.GOOD, now);
+
+        assertThat(card.getNextReviewAt().toLocalDate()).isEqualTo(LocalDate.of(2026, 12, 8));
+        assertThat(card.getIntervalDays()).isEqualTo(18);
+    }
+
+    @Test
+    void lastReviewIsOneOrTwoDaysBeforeExam() {
+        LocalDate examDate = LocalDate.of(2026, 12, 10);
+        SpacedRepetitionService fuzzy = new SpacedRepetitionService(new Random(7));
+
+        for (int i = 0; i < 50; i++) {
+            Card card = reviewedCard(4, 30, 2.5);
+            deckWithExam(examDate).addCard(card);
+            fuzzy.review(card, Grade.GOOD, now);
+            assertThat(card.getNextReviewAt().toLocalDate()).isBetween(examDate.minusDays(2), examDate.minusDays(1));
+        }
+    }
+
+    @Test
+    void examFarAwayDoesNotChangeInterval() {
+        Card card = reviewedCard(2, 6, 2.5);
+        deckWithExam(LocalDate.of(2027, 6, 1)).addCard(card);
+
+        service.review(card, Grade.GOOD, now);
+
+        assertThat(card.getIntervalDays()).isEqualTo(15);
+    }
+
+    @Test
+    void examInTwoDaysUsesDayBefore() {
+        Card card = reviewedCard(2, 6, 2.5);
+        deckWithExam(now.toLocalDate().plusDays(2)).addCard(card);
+
+        service.review(card, Grade.GOOD, now);
+
+        assertThat(card.getIntervalDays()).isEqualTo(1);
+    }
+
+    @Test
+    void examTomorrowIsIgnored() {
+        Card card = reviewedCard(2, 6, 2.5);
+        deckWithExam(now.toLocalDate().plusDays(1)).addCard(card);
+
+        service.review(card, Grade.GOOD, now);
+
+        assertThat(card.getIntervalDays()).isEqualTo(15);
+    }
+
+    @Test
+    void learningStepIsNotAffectedByExam() {
+        Card card = new Card("JVM", "машина");
+        deckWithExam(now.toLocalDate().plusDays(3)).addCard(card);
+
+        service.review(card, Grade.GOOD, now);
+
+        assertThat(card.getNextReviewAt()).isEqualTo(now.plusMinutes(10));
+    }
+
+    private Deck deckWithExam(LocalDate examDate) {
+        Deck deck = new Deck("Java", null);
+        deck.setExamDate(examDate);
+        return deck;
     }
 
     private static class MiddleRandom extends Random {

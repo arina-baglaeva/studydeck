@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.time.LocalDate;
+
 @Controller
 @RequestMapping("/decks")
 public class DeckController {
@@ -54,7 +56,7 @@ public class DeckController {
             addLengthLimits(model);
             return "deck-form";
         }
-        Deck deck = deckService.create(deckForm.getTitle(), deckForm.getDescription());
+        Deck deck = deckService.create(deckForm.getTitle(), deckForm.getDescription(), deckForm.getExamDate());
         return "redirect:/decks/" + deck.getId();
     }
 
@@ -67,5 +69,6 @@ public class DeckController {
     private void addLengthLimits(Model model) {
         model.addAttribute("titleMaxLength", Deck.TITLE_MAX_LENGTH);
         model.addAttribute("descriptionMaxLength", Deck.DESCRIPTION_MAX_LENGTH);
+        model.addAttribute("today", LocalDate.now());
     }
 }

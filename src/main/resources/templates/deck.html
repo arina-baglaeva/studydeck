@@ -7,6 +7,7 @@
     <p><a th:href="@{/}">← Все колоды</a></p>
     <h1 class="deck-title" th:text="${deck.title}">Колода</h1>
     <p class="deck-description" th:if="${deck.description != null}" th:text="${deck.description}">Описание</p>
+    <p class="deck-exam" th:if="${deck.examDate != null}" th:text="'Зачёт: ' + ${#temporals.format(deck.examDate, 'dd.MM.yyyy')}">Зачёт</p>
     <p class="deck-count" th:text="(${#strings.isEmpty(query)} ? 'Карточек: ' : 'Найдено: ') + ${#lists.size(cards)}">Карточек: 0</p>
     <div class="deck-actions">
         <a class="button" th:href="@{/decks/{id}/study(id=${deckId})}">Учить</a>

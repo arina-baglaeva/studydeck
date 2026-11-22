@@ -8,6 +8,7 @@ import com.studydeck.repository.DeckRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -37,7 +38,13 @@ public class DeckService {
 
     @Transactional
     public Deck create(String title, String description) {
+        return create(title, description, null);
+    }
+
+    @Transactional
+    public Deck create(String title, String description, LocalDate examDate) {
         Deck deck = new Deck(TextUtils.clean(title), TextUtils.cleanOrNull(description));
+        deck.setExamDate(examDate);
         return deckRepository.save(deck);
     }
 

@@ -1,8 +1,12 @@
 package com.studydeck.dto;
 
 import com.studydeck.model.Deck;
+import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.time.LocalDate;
 
 public class DeckForm {
 
@@ -12,6 +16,10 @@ public class DeckForm {
 
     @Size(max = Deck.DESCRIPTION_MAX_LENGTH, message = "Описание не длиннее " + Deck.DESCRIPTION_MAX_LENGTH + " символов")
     private String description;
+
+    @FutureOrPresent(message = "Дата зачёта не может быть в прошлом")
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    private LocalDate examDate;
 
     public String getTitle() {
         return title;
@@ -27,5 +35,13 @@ public class DeckForm {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public LocalDate getExamDate() {
+        return examDate;
+    }
+
+    public void setExamDate(LocalDate examDate) {
+        this.examDate = examDate;
     }
 }

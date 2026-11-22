@@ -16,6 +16,11 @@
             <textarea id="description" rows="4" th:field="*{description}" th:maxlength="${descriptionMaxLength}"></textarea>
             <p class="form-error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}">Ошибка</p>
         </div>
+        <div class="form-field">
+            <label for="examDate">Дата зачёта (необязательно)</label>
+            <input id="examDate" type="date" th:field="*{examDate}" th:min="${today}">
+            <p class="form-error" th:if="${#fields.hasErrors('examDate')}" th:errors="*{examDate}">Ошибка</p>
+        </div>
         <div class="form-actions">
             <button class="button" type="submit">Создать</button>
             <a th:href="@{/}">Отмена</a>

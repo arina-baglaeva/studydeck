@@ -4,7 +4,9 @@ import com.studydeck.model.Card;
 import com.studydeck.model.Grade;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Random;
 
 @Service
@@ -18,6 +20,8 @@ public class SpacedRepetitionService {
     public static final double LAPSE_EASE_PENALTY = 0.2;
     public static final int MIN_FUZZ_INTERVAL_DAYS = 3;
     public static final double FUZZ_FACTOR = 0.05;
+    public static final int MIN_DAYS_BEFORE_EXAM = 1;
+    public static final int MAX_DAYS_BEFORE_EXAM = 2;
 
     private final Random random;
 
@@ -47,8 +51,7 @@ public class SpacedRepetitionService {
         boolean graduates = grade == Grade.EASY || (grade == Grade.GOOD && !card.isNew());
         if (graduates) {
             card.setRepetitions(1);
-            card.setIntervalDays(GRADUATING_INTERVAL_DAYS);
-            card.setNextReviewAt(now.plusDays(GRADUATING_INTERVAL_DAYS));
+            scheduleInDays(card, GRADUATING_INTERVAL_DAYS, now);
         } else {
             card.setNextReviewAt(now.plusMinutes(LEARNING_STEP_MINUTES));
         }
@@ -66,8 +69,33 @@ public class SpacedRepetitionService {
         card.setEaseFactor(newEaseFactor(card.getEaseFactor(), grade));
         int interval = Math.max(card.getIntervalDays() + 1, fuzz(nextInterval(card, grade)));
         card.setRepetitions(card.getRepetitions() + 1);
+        scheduleInDays(card, interval, now);
+    }
+
+    private void scheduleInDays(Card card, int interval, LocalDateTime now) {
+        LocalDate today = now.toLocalDate();
+        LocalDate lastDay = lastReviewDayBeforeExam(card, today);
+        if (lastDay != null && today.plusDays(interval).isAfter(lastDay)) {
+            interval = (int) ChronoUnit.DAYS.between(today, lastDay);
+        }
         card.setIntervalDays(interval);
         card.setNextReviewAt(now.plusDays(interval));
+    }
+
+    LocalDate lastReviewDayBeforeExam(Card card, LocalDate today) {
+        if (card.getDeck() == null || card.getDeck().getExamDate() == null) {
+            return null;
+        }
+        LocalDate examDate = card.getDeck().getExamDate();
+        int extraDays = random.nextInt(MAX_DAYS_BEFORE_EXAM - MIN_DAYS_BEFORE_EXAM + 1);
+        LocalDate lastDay = examDate.minusDays(MIN_DAYS_BEFORE_EXAM + extraDays);
+        if (!lastDay.isAfter(today)) {
+            lastDay = examDate.minusDays(MIN_DAYS_BEFORE_EXAM);
+        }
+        if (!lastDay.isAfter(today)) {
+            return null;
+        }
+        return lastDay;
     }
 
     static double newEaseFactor(double easeFactor, Grade grade) {

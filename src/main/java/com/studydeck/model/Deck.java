@@ -11,6 +11,7 @@ import jakarta.persistence.OrderBy;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +38,9 @@ public class Deck {
 
     @Column
     private Long bestMatchTimeMillis;
+
+    @Column
+    private LocalDate examDate;
 
     @OneToMany(mappedBy = "deck", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("id ASC")
@@ -99,6 +103,14 @@ public class Deck {
 
     public Long getBestMatchTimeMillis() {
         return bestMatchTimeMillis;
+    }
+
+    public LocalDate getExamDate() {
+        return examDate;
+    }
+
+    public void setExamDate(LocalDate examDate) {
+        this.examDate = examDate;
     }
 
     public List<Card> getCards() {

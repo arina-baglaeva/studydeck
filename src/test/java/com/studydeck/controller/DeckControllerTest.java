@@ -11,6 +11,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
@@ -95,7 +96,7 @@ class DeckControllerTest {
     void validDeckIsCreatedAndRedirectsToDeckPage() throws Exception {
         Deck deck = mock(Deck.class);
         when(deck.getId()).thenReturn(5L);
-        when(deckService.create("Java", "Термины")).thenReturn(deck);
+        when(deckService.create("Java", "Термины", null)).thenReturn(deck);
 
         mockMvc.perform(post("/decks")
                         .param("title", "Java")
@@ -103,7 +104,60 @@ class DeckControllerTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/decks/5"));
 
-        verify(deckService).create("Java", "Термины");
+        verify(deckService).create("Java", "Термины", null);
+    }
+
+    @Test
+    void examDateIsPassedToService() throws Exception {
+        Deck deck = mock(Deck.class);
+        when(deck.getId()).thenReturn(6L);
+        LocalDate examDate = LocalDate.now().plusDays(30);
+        when(deckService.create("Java", "", examDate)).thenReturn(deck);
+
+        mockMvc.perform(post("/decks")
+                        .param("title", "Java")
+                        .param("description", "")
+                        .param("examDate", examDate.toString()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/decks/6"));
+
+        verify(deckService).create("Java", "", examDate);
+    }
+
+    @Test
+    void pastExamDateShowsError() throws Exception {
+        mockMvc.perform(post("/decks")
+                        .param("title", "Java")
+                        .param("examDate", LocalDate.now().minusDays(1).toString()))
+                .andExpect(status().isOk())
+                .andExpect(view().name("deck-form"))
+                .andExpect(model().attributeHasFieldErrors("deckForm", "examDate"));
+
+        verify(deckService, never()).create(any(), any(), any());
+    }
+
+    @Test
+    void invalidExamDateShowsErrorAndIsEscaped() throws Exception {
+        mockMvc.perform(post("/decks")
+                        .param("title", "Java")
+                        .param("examDate", "<script>"))
+                .andExpect(status().isOk())
+                .andExpect(model().attributeHasFieldErrors("deckForm", "examDate"))
+                .andExpect(content().string(not(containsString("<script>"))));
+
+        verify(deckService, never()).create(any(), any(), any());
+    }
+
+    @Test
+    void deckPageShowsExamDate() throws Exception {
+        Deck deck = new Deck("Java", null);
+        deck.setExamDate(LocalDate.of(2026, 12, 25));
+        when(deckService.getById(1L)).thenReturn(deck);
+        when(cardService.search(1L, null)).thenReturn(List.of());
+
+        mockMvc.perform(get("/decks/1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Зачёт: 25.12.2026")));
     }
 
     @Test
@@ -115,7 +169,7 @@ class DeckControllerTest {
                 .andExpect(view().name("deck-form"))
                 .andExpect(model().attributeHasFieldErrors("deckForm", "title"));
 
-        verify(deckService, never()).create(any(), any());
+        verify(deckService, never()).create(any(), any(), any());
     }
 
     @Test
@@ -125,7 +179,7 @@ class DeckControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(model().attributeHasFieldErrors("deckForm", "title"));
 
-        verify(deckService, never()).create(any(), any());
+        verify(deckService, never()).create(any(), any(), any());
     }
 
     @Test
@@ -136,7 +190,7 @@ class DeckControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(model().attributeHasFieldErrors("deckForm", "description"));
 
-        verify(deckService, never()).create(any(), any());
+        verify(deckService, never()).create(any(), any(), any());
     }
 
     @Test
