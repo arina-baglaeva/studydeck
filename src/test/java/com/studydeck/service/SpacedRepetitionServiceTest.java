@@ -5,13 +5,16 @@ import com.studydeck.model.Grade;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Random;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
 class SpacedRepetitionServiceTest {
 
-    private final SpacedRepetitionService service = new SpacedRepetitionService();
+    private final SpacedRepetitionService service = new SpacedRepetitionService(new MiddleRandom());
     private final LocalDateTime now = LocalDateTime.of(2026, 11, 20, 12, 0);
 
     @Test
@@ -172,5 +175,59 @@ class SpacedRepetitionServiceTest {
         card.setEaseFactor(easeFactor);
         card.setNextReviewAt(now);
         return card;
+    }
+
+    @Test
+    void shortIntervalsAreNotFuzzed() {
+        SpacedRepetitionService fuzzy = new SpacedRepetitionService(new Random(42));
+
+        assertThat(fuzzy.fuzz(1)).isEqualTo(1);
+        assertThat(fuzzy.fuzz(2)).isEqualTo(2);
+    }
+
+    @Test
+    void fuzzStaysWithinFivePercentOrOneDay() {
+        SpacedRepetitionService fuzzy = new SpacedRepetitionService(new Random(42));
+
+        for (int i = 0; i < 200; i++) {
+            assertThat(fuzzy.fuzz(6)).isBetween(5, 7);
+            assertThat(fuzzy.fuzz(100)).isBetween(95, 105);
+        }
+    }
+
+    @Test
+    void fuzzSpreadsCardsOverDifferentDays() {
+        SpacedRepetitionService fuzzy = new SpacedRepetitionService(new Random(42));
+        Set<Integer> intervals = new HashSet<>();
+
+        for (int i = 0; i < 50; i++) {
+            intervals.add(fuzzy.fuzz(40));
+        }
+
+        assertThat(intervals.size()).isGreaterThan(1);
+    }
+
+    @Test
+    void fuzzedIntervalStillGrowsAfterSuccess() {
+        SpacedRepetitionService lowest = new SpacedRepetitionService(new LowestRandom());
+        Card card = reviewedCard(3, 3, Card.MIN_EASE_FACTOR);
+
+        lowest.review(card, Grade.HARD, now);
+
+        assertThat(card.getIntervalDays()).isGreaterThan(3);
+    }
+
+    private static class MiddleRandom extends Random {
+        @Override
+        public int nextInt(int bound) {
+            return bound / 2;
+        }
+    }
+
+    private static class LowestRandom extends Random {
+        @Override
+        public int nextInt(int bound) {
+            return 0;
+        }
     }
 }

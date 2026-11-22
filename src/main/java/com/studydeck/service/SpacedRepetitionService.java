@@ -5,6 +5,7 @@ import com.studydeck.model.Grade;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Random;
 
 @Service
 public class SpacedRepetitionService {
@@ -15,6 +16,18 @@ public class SpacedRepetitionService {
     public static final double HARD_MULTIPLIER = 1.2;
     public static final double EASY_BONUS = 1.3;
     public static final double LAPSE_EASE_PENALTY = 0.2;
+    public static final int MIN_FUZZ_INTERVAL_DAYS = 3;
+    public static final double FUZZ_FACTOR = 0.05;
+
+    private final Random random;
+
+    public SpacedRepetitionService() {
+        this(new Random());
+    }
+
+    SpacedRepetitionService(Random random) {
+        this.random = random;
+    }
 
     public void review(Card card, Grade grade, LocalDateTime now) {
         if (isLearning(card)) {
@@ -51,7 +64,7 @@ public class SpacedRepetitionService {
 
     private void reviewGraduated(Card card, Grade grade, LocalDateTime now) {
         card.setEaseFactor(newEaseFactor(card.getEaseFactor(), grade));
-        int interval = nextInterval(card, grade);
+        int interval = Math.max(card.getIntervalDays() + 1, fuzz(nextInterval(card, grade)));
         card.setRepetitions(card.getRepetitions() + 1);
         card.setIntervalDays(interval);
         card.setNextReviewAt(now.plusDays(interval));
@@ -77,5 +90,13 @@ public class SpacedRepetitionService {
             interval = (int) Math.round(interval * EASY_BONUS);
         }
         return Math.max(current + 1, interval);
+    }
+
+    int fuzz(int interval) {
+        if (interval < MIN_FUZZ_INTERVAL_DAYS) {
+            return interval;
+        }
+        int range = Math.max(1, (int) Math.round(interval * FUZZ_FACTOR));
+        return interval - range + random.nextInt(2 * range + 1);
     }
 }
