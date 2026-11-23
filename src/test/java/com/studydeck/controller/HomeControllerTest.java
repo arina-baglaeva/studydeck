@@ -2,6 +2,7 @@ package com.studydeck.controller;
 
 import com.studydeck.dto.DeckSummary;
 import com.studydeck.service.DeckService;
+import com.studydeck.service.ReviewService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -26,6 +28,9 @@ class HomeControllerTest {
 
     @MockBean
     private DeckService deckService;
+
+    @MockBean
+    private ReviewService reviewService;
 
     @Test
     void homeShowsDecksWithCardCount() throws Exception {
@@ -57,5 +62,27 @@ class HomeControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(not(containsString("<script>alert(1)</script>"))))
                 .andExpect(content().string(containsString("&lt;script&gt;")));
+    }
+
+    @Test
+    void homeShowsReviewCounterWithLink() throws Exception {
+        when(deckService.findAllSummaries()).thenReturn(List.of());
+        when(reviewService.countForToday(any())).thenReturn(7L);
+
+        mockMvc.perform(get("/"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Повторить сегодня: <strong class=\"review-count\">7</strong>")))
+                .andExpect(content().string(containsString("href=\"/review\"")));
+    }
+
+    @Test
+    void homeSaysAllReviewedWhenNothingIsDue() throws Exception {
+        when(deckService.findAllSummaries()).thenReturn(List.of());
+        when(reviewService.countForToday(any())).thenReturn(0L);
+
+        mockMvc.perform(get("/"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("На сегодня всё повторено")))
+                .andExpect(content().string(not(containsString("Начать повторение"))));
     }
 }

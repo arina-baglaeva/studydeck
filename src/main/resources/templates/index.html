@@ -5,6 +5,11 @@
 <header th:replace="~{fragments/layout :: header}"></header>
 <main class="container">
     <h1>Мои колоды</h1>
+    <p class="review-banner" th:if="${reviewCount > 0}">
+        Повторить сегодня: <strong class="review-count" th:text="${reviewCount}">5</strong>
+        <a class="button" th:href="@{/review}">Начать повторение</a>
+    </p>
+    <p class="review-banner" th:if="${reviewCount == 0}">На сегодня всё повторено.</p>
     <p><a class="button" th:href="@{/decks/new}">Создать колоду</a></p>
     <p class="empty" th:if="${#lists.isEmpty(decks)}">Колод пока нет.</p>
     <ul class="deck-list" th:unless="${#lists.isEmpty(decks)}">

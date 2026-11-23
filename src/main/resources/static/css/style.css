@@ -605,3 +605,51 @@ main {
     border: 1px solid var(--border);
     border-radius: 8px;
 }
+
+.review-card {
+    margin: 16px 0;
+    padding: 24px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: #ffffff;
+    text-align: center;
+}
+
+.review-answer summary {
+    list-style: none;
+}
+
+.review-answer summary::-webkit-details-marker {
+    display: none;
+}
+
+.review-grades {
+    display: flex;
+    gap: 12px;
+}
+
+.review-grades .button {
+    flex: 1;
+}
+
+.grade-again {
+    background: #b23b3b;
+}
+
+.grade-hard {
+    background: #c27c1a;
+}
+
+.grade-good {
+    background: #2e7d4f;
+}
+
+.grade-easy {
+    background: #2a6fb0;
+}
+
+.review-banner {
+    padding: 12px 16px;
+    border-radius: 8px;
+    background: #eef4ff;
+}

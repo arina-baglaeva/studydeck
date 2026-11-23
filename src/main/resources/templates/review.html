@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Повторить сегодня')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container">
+    <h1>Повторить сегодня</h1>
+    <div class="empty" th:if="${card == null}">
+        <p>На сегодня всё повторено. Возвращайтесь завтра!</p>
+        <p><a th:href="@{/}">К моим колодам</a></p>
+    </div>
+    <div class="review" th:if="${card != null}">
+        <p class="muted">
+            Осталось карточек: <span class="review-remaining" th:text="${remaining}">5</span>
+            · Колода: <span th:text="${card.deck.title}">Колода</span>
+        </p>
+        <div class="review-card">
+            <span class="study-label">Термин</span>
+            <p class="study-text" th:text="${card.term}">Термин</p>
+        </div>
+        <details class="review-answer">
+            <summary class="button">Показать ответ</summary>
+            <div class="review-card">
+                <span class="study-label">Определение</span>
+                <p class="study-text" th:text="${card.definition}">Определение</p>
+            </div>
+            <form class="review-grades" method="post" th:action="@{/review/{id}(id=${card.id})}">
+                <button class="button" type="submit" name="grade"
+                        th:each="grade : ${grades}"
+                        th:value="${grade.name()}"
+                        th:classappend="'grade-' + ${#strings.toLowerCase(grade.name())}"
+                        th:text="${grade.label}">Хорошо</button>
+            </form>
+        </details>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>
