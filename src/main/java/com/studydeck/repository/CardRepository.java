@@ -1,10 +1,12 @@
 package com.studydeck.repository;
 
 import com.studydeck.model.Card;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,4 +23,14 @@ public interface CardRepository extends JpaRepository<Card, Long> {
             + "or lower(c.definition) like :pattern escape '!') "
             + "order by c.id asc")
     List<Card> searchInDeck(@Param("deckId") Long deckId, @Param("pattern") String pattern);
+
+    @EntityGraph(attributePaths = "deck")
+    Optional<Card> findFirstByNextReviewAtLessThanEqualOrderByNextReviewAtAscIdAsc(LocalDateTime now);
+
+    @EntityGraph(attributePaths = "deck")
+    Optional<Card> findFirstByNextReviewAtIsNullOrderByIdAsc();
+
+    long countByNextReviewAtLessThanEqual(LocalDateTime now);
+
+    long countByNextReviewAtIsNull();
 }
