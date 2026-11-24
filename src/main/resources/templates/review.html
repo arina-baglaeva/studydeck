@@ -18,11 +18,25 @@
             <span class="study-label">Термин</span>
             <p class="study-text" th:text="${card.term}">Термин</p>
         </div>
-        <details class="review-answer">
-            <summary class="button">Показать ответ</summary>
+        <form class="review-recall" method="post" autocomplete="off" th:unless="${revealed}"
+              th:action="@{/review/{id}/answer(id=${card.id})}">
+            <label class="write-prompt" for="answer">Сначала вспомните определение. Можно написать его или просто проговорить про себя.</label>
+            <textarea class="write-input" id="answer" name="answer" rows="3" spellcheck="false"
+                      th:maxlength="${answerMaxLength}"></textarea>
+            <p class="form-actions">
+                <button class="button" type="submit">Показать ответ</button>
+            </p>
+        </form>
+        <div class="review-answer" th:if="${revealed}">
             <div class="review-card">
                 <span class="study-label">Определение</span>
                 <p class="study-text" th:text="${card.definition}">Определение</p>
+            </div>
+            <p class="recall-result recall-match" th:if="${recall.matches}">Совпадает с ответом. Отлично!</p>
+            <div class="recall-result" th:if="${recall.typed and !recall.matches}">
+                <span class="study-label">Ваш ответ</span>
+                <p class="recall-typed" th:text="${recall.typedAnswer}">Ответ</p>
+                <p class="muted">Ответ не совпал дословно. Сравните по смыслу и оцените себя честно.</p>
             </div>
             <form class="review-grades" method="post" th:action="@{/review/{id}(id=${card.id})}">
                 <button class="button" type="submit" name="grade"
@@ -31,7 +45,7 @@
                         th:classappend="'grade-' + ${#strings.toLowerCase(grade.name())}"
                         th:text="${grade.label}">Хорошо</button>
             </form>
-        </details>
+        </div>
     </div>
 </main>
 <footer th:replace="~{fragments/layout :: footer}"></footer>

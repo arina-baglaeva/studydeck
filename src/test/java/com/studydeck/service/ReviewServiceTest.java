@@ -1,5 +1,6 @@
 package com.studydeck.service;
 
+import com.studydeck.dto.RecallResult;
 import com.studydeck.exception.NotFoundException;
 import com.studydeck.model.Card;
 import com.studydeck.model.Deck;
@@ -142,6 +143,73 @@ class ReviewServiceTest {
         Card card = reviewService.nextCard(NOW).orElseThrow();
 
         assertThat(card.getDeck().getTitle()).isEqualTo("Java");
+    }
+
+    @Test
+    void waitingCardIsFoundWithDeck() {
+        Deck deck = new Deck("Java", null);
+        Card card = new Card("JVM", "машина");
+        deck.addCard(card);
+        deckRepository.save(deck);
+
+        Card found = reviewService.findWaitingCard(card.getId(), NOW).orElseThrow();
+
+        assertThat(found.getDeck().getTitle()).isEqualTo("Java");
+    }
+
+    @Test
+    void cardNotDueYetIsNotWaiting() {
+        Deck deck = new Deck("Java", null);
+        Card card = cardDueAt("JVM", NOW.plusDays(2));
+        deck.addCard(card);
+        deckRepository.save(deck);
+
+        assertThat(reviewService.findWaitingCard(card.getId(), NOW)).isEmpty();
+    }
+
+    @Test
+    void findingMissingCardThrowsNotFound() {
+        assertThatThrownBy(() -> reviewService.findWaitingCard(999L, NOW))
+                .isInstanceOf(NotFoundException.class);
+    }
+
+    @Test
+    void recallMatchesIgnoringCaseAndSpaces() {
+        Card card = new Card("JVM", "Виртуальная машина Java");
+
+        RecallResult result = reviewService.checkRecall(card, "  виртуальная   МАШИНА java ");
+
+        assertThat(result.isTyped()).isTrue();
+        assertThat(result.isMatches()).isTrue();
+        assertThat(result.getTypedAnswer()).isEqualTo("виртуальная МАШИНА java");
+    }
+
+    @Test
+    void differentRecallDoesNotMatch() {
+        Card card = new Card("JVM", "Виртуальная машина Java");
+
+        RecallResult result = reviewService.checkRecall(card, "компилятор");
+
+        assertThat(result.isTyped()).isTrue();
+        assertThat(result.isMatches()).isFalse();
+    }
+
+    @Test
+    void emptyRecallMeansRememberedSilently() {
+        Card card = new Card("JVM", "машина");
+
+        assertThat(reviewService.checkRecall(card, null).isTyped()).isFalse();
+        assertThat(reviewService.checkRecall(card, "   ").isTyped()).isFalse();
+        assertThat(reviewService.checkRecall(card, "   ").isMatches()).isFalse();
+    }
+
+    @Test
+    void tooLongRecallIsCut() {
+        Card card = new Card("JVM", "машина");
+
+        RecallResult result = reviewService.checkRecall(card, "а".repeat(Card.DEFINITION_MAX_LENGTH + 500));
+
+        assertThat(result.getTypedAnswer()).hasSize(Card.DEFINITION_MAX_LENGTH);
     }
 
     private Card cardDueAt(String term, LocalDateTime nextReviewAt) {

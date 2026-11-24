@@ -1,5 +1,6 @@
 package com.studydeck.controller;
 
+import com.studydeck.dto.RecallResult;
 import com.studydeck.exception.NotFoundException;
 import com.studydeck.model.Card;
 import com.studydeck.model.Deck;
@@ -37,7 +38,7 @@ class ReviewControllerTest {
     private ReviewService reviewService;
 
     @Test
-    void reviewPageShowsNextCardAndGradeButtons() throws Exception {
+    void reviewPageAsksToRecallBeforeShowingAnswer() throws Exception {
         givenNextCard("JVM", "виртуальная машина");
         when(reviewService.countForToday(any())).thenReturn(4L);
 
@@ -45,14 +46,83 @@ class ReviewControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("review"))
                 .andExpect(content().string(containsString("JVM")))
-                .andExpect(content().string(containsString("виртуальная машина")))
                 .andExpect(content().string(containsString("Осталось карточек: <span class=\"review-remaining\">4</span>")))
-                .andExpect(content().string(containsString("method=\"post\"")))
+                .andExpect(content().string(containsString("Сначала вспомните определение")))
+                .andExpect(content().string(containsString("maxlength=\"1000\"")))
+                .andExpect(content().string(containsString("Показать ответ")))
+                .andExpect(content().string(not(containsString("виртуальная машина"))))
+                .andExpect(content().string(not(containsString("value=\"AGAIN\""))));
+    }
+
+    @Test
+    void answerPageShowsDefinitionAndGradeButtons() throws Exception {
+        Card card = givenWaitingCard("JVM", "виртуальная машина");
+        when(reviewService.checkRecall(card, "машина")).thenReturn(new RecallResult("машина", false));
+
+        mockMvc.perform(post("/review/5/answer").param("answer", "машина"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("review"))
+                .andExpect(content().string(containsString("виртуальная машина")))
+                .andExpect(content().string(containsString("Ваш ответ")))
+                .andExpect(content().string(containsString("не совпал дословно")))
                 .andExpect(content().string(containsString("value=\"AGAIN\"")))
                 .andExpect(content().string(containsString("Снова")))
                 .andExpect(content().string(containsString("Трудно")))
                 .andExpect(content().string(containsString("Хорошо")))
-                .andExpect(content().string(containsString("Легко")));
+                .andExpect(content().string(containsString("Легко")))
+                .andExpect(content().string(not(containsString("Сначала вспомните определение"))));
+    }
+
+    @Test
+    void matchingAnswerIsPraised() throws Exception {
+        Card card = givenWaitingCard("JVM", "машина");
+        when(reviewService.checkRecall(card, "Машина")).thenReturn(new RecallResult("Машина", true));
+
+        mockMvc.perform(post("/review/5/answer").param("answer", "Машина"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Совпадает с ответом")))
+                .andExpect(content().string(not(containsString("Ваш ответ"))));
+    }
+
+    @Test
+    void answerCanBeRecalledWithoutTyping() throws Exception {
+        Card card = givenWaitingCard("JVM", "машина");
+        when(reviewService.checkRecall(card, null)).thenReturn(RecallResult.notTyped());
+
+        mockMvc.perform(post("/review/5/answer"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("value=\"GOOD\"")))
+                .andExpect(content().string(not(containsString("Ваш ответ"))))
+                .andExpect(content().string(not(containsString("Совпадает с ответом"))));
+    }
+
+    @Test
+    void typedAnswerIsEscaped() throws Exception {
+        Card card = givenWaitingCard("JVM", "машина");
+        String typed = "<script>alert(1)</script>";
+        when(reviewService.checkRecall(card, typed)).thenReturn(new RecallResult(typed, false));
+
+        mockMvc.perform(post("/review/5/answer").param("answer", typed))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString(typed))))
+                .andExpect(content().string(containsString("&lt;script&gt;")));
+    }
+
+    @Test
+    void answerForCardThatIsNotDueRedirectsBack() throws Exception {
+        when(reviewService.findWaitingCard(eq(5L), any())).thenReturn(Optional.empty());
+
+        mockMvc.perform(post("/review/5/answer").param("answer", "машина"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/review"));
+    }
+
+    @Test
+    void answerForMissingCardReturns404() throws Exception {
+        when(reviewService.findWaitingCard(eq(999L), any())).thenThrow(new NotFoundException("Карточка не найдена"));
+
+        mockMvc.perform(post("/review/999/answer"))
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -67,9 +137,20 @@ class ReviewControllerTest {
 
     @Test
     void cardTextIsEscaped() throws Exception {
-        givenNextCard("<b>x</b>", "<script>alert(1)</script>");
+        givenNextCard("<script>alert(1)</script>", "<b>x</b>");
 
         mockMvc.perform(get("/review"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("<script>alert(1)</script>"))))
+                .andExpect(content().string(containsString("&lt;script&gt;")));
+    }
+
+    @Test
+    void definitionIsEscapedOnAnswerPage() throws Exception {
+        Card card = givenWaitingCard("JVM", "<script>alert(1)</script>");
+        when(reviewService.checkRecall(card, null)).thenReturn(RecallResult.notTyped());
+
+        mockMvc.perform(post("/review/5/answer"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(not(containsString("<script>alert(1)</script>"))))
                 .andExpect(content().string(containsString("&lt;script&gt;")));
@@ -112,6 +193,14 @@ class ReviewControllerTest {
     void nonNumericCardIdReturns404() throws Exception {
         mockMvc.perform(post("/review/abc").param("grade", "GOOD"))
                 .andExpect(status().isNotFound());
+    }
+
+    private Card givenWaitingCard(String term, String definition) {
+        Deck deck = new Deck("Java", null);
+        Card card = new Card(term, definition);
+        deck.addCard(card);
+        when(reviewService.findWaitingCard(eq(5L), any())).thenReturn(Optional.of(card));
+        return card;
     }
 
     private void givenNextCard(String term, String definition) {

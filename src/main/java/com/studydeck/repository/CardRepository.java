@@ -30,6 +30,9 @@ public interface CardRepository extends JpaRepository<Card, Long> {
     @EntityGraph(attributePaths = "deck")
     Optional<Card> findFirstByNextReviewAtIsNullOrderByIdAsc();
 
+    @EntityGraph(attributePaths = "deck")
+    Optional<Card> findWithDeckById(Long id);
+
     long countByNextReviewAtLessThanEqual(LocalDateTime now);
 
     long countByNextReviewAtIsNull();

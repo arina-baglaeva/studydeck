@@ -1,5 +1,6 @@
 package com.studydeck.service;
 
+import com.studydeck.dto.RecallResult;
 import com.studydeck.exception.NotFoundException;
 import com.studydeck.model.Card;
 import com.studydeck.model.Grade;
@@ -33,6 +34,28 @@ public class ReviewService {
     @Transactional(readOnly = true)
     public long countForToday(LocalDateTime now) {
         return cardRepository.countByNextReviewAtLessThanEqual(now) + cardRepository.countByNextReviewAtIsNull();
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Card> findWaitingCard(Long cardId, LocalDateTime now) {
+        Card card = cardRepository.findWithDeckById(cardId)
+                .orElseThrow(() -> new NotFoundException("Карточка не найдена"));
+        if (!isWaitingForReview(card, now)) {
+            return Optional.empty();
+        }
+        return Optional.of(card);
+    }
+
+    public RecallResult checkRecall(Card card, String typedAnswer) {
+        String typed = TextUtils.clean(typedAnswer);
+        if (typed.length() > Card.DEFINITION_MAX_LENGTH) {
+            typed = typed.substring(0, Card.DEFINITION_MAX_LENGTH);
+        }
+        if (typed.isEmpty()) {
+            return RecallResult.notTyped();
+        }
+        boolean matches = TextUtils.normalize(typed).equals(TextUtils.normalize(card.getDefinition()));
+        return new RecallResult(typed, matches);
     }
 
     @Transactional
