@@ -5,30 +5,50 @@ import com.studydeck.exception.NotFoundException;
 import com.studydeck.model.Card;
 import com.studydeck.model.Grade;
 import com.studydeck.repository.CardRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 
 @Service
 public class ReviewService {
 
     private final CardRepository cardRepository;
     private final SpacedRepetitionService spacedRepetitionService;
+    private final Random random;
 
+    @Autowired
     public ReviewService(CardRepository cardRepository, SpacedRepetitionService spacedRepetitionService) {
+        this(cardRepository, spacedRepetitionService, new Random());
+    }
+
+    ReviewService(CardRepository cardRepository, SpacedRepetitionService spacedRepetitionService, Random random) {
         this.cardRepository = cardRepository;
         this.spacedRepetitionService = spacedRepetitionService;
+        this.random = random;
     }
 
     @Transactional(readOnly = true)
     public Optional<Card> nextCard(LocalDateTime now) {
-        Optional<Card> dueCard = cardRepository.findFirstByNextReviewAtLessThanEqualOrderByNextReviewAtAscIdAsc(now);
-        if (dueCard.isPresent()) {
-            return dueCard;
+        List<Long> dueDeckIds = cardRepository.findDeckIdsWithDueCards(now);
+        if (!dueDeckIds.isEmpty()) {
+            Long deckId = randomDeckId(dueDeckIds);
+            return cardRepository.findFirstByDeckIdAndNextReviewAtLessThanEqualOrderByNextReviewAtAscIdAsc(deckId, now);
         }
-        return cardRepository.findFirstByNextReviewAtIsNullOrderByIdAsc();
+        List<Long> newDeckIds = cardRepository.findDeckIdsWithNewCards();
+        if (!newDeckIds.isEmpty()) {
+            Long deckId = randomDeckId(newDeckIds);
+            return cardRepository.findFirstByDeckIdAndNextReviewAtIsNullOrderByIdAsc(deckId);
+        }
+        return Optional.empty();
+    }
+
+    private Long randomDeckId(List<Long> deckIds) {
+        return deckIds.get(random.nextInt(deckIds.size()));
     }
 
     @Transactional(readOnly = true)

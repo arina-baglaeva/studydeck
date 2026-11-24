@@ -13,6 +13,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 
 import java.time.LocalDateTime;
+import java.util.Random;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -146,6 +147,64 @@ class ReviewServiceTest {
     }
 
     @Test
+    void dueCardsAreTakenFromRandomDeck() {
+        Deck java = new Deck("Java", null);
+        Card jvm = cardDueAt("JVM", NOW.minusDays(1));
+        java.addCard(jvm);
+        Deck english = new Deck("English", null);
+        Card bug = cardDueAt("bug", NOW.minusDays(1));
+        english.addCard(bug);
+        deckRepository.save(java);
+        deckRepository.save(english);
+
+        assertThat(serviceWithRandom(0).nextCard(NOW)).contains(jvm);
+        assertThat(serviceWithRandom(1).nextCard(NOW)).contains(bug);
+    }
+
+    @Test
+    void newCardsAreTakenFromRandomDeck() {
+        Deck java = new Deck("Java", null);
+        Card jvm = new Card("JVM", "машина");
+        java.addCard(jvm);
+        java.addCard(new Card("JDK", "набор"));
+        Deck english = new Deck("English", null);
+        Card bug = new Card("bug", "ошибка");
+        english.addCard(bug);
+        deckRepository.save(java);
+        deckRepository.save(english);
+
+        assertThat(serviceWithRandom(0).nextCard(NOW)).contains(jvm);
+        assertThat(serviceWithRandom(1).nextCard(NOW)).contains(bug);
+    }
+
+    @Test
+    void dueCardFromOneDeckComesBeforeNewCardFromAnother() {
+        Deck java = new Deck("Java", null);
+        java.addCard(new Card("JVM", "машина"));
+        Deck english = new Deck("English", null);
+        Card bug = cardDueAt("bug", NOW.minusDays(1));
+        english.addCard(bug);
+        deckRepository.save(java);
+        deckRepository.save(english);
+
+        assertThat(serviceWithRandom(0).nextCard(NOW)).contains(bug);
+    }
+
+    @Test
+    void oldestDueCardOfChosenDeckIsShown() {
+        Deck java = new Deck("Java", null);
+        java.addCard(cardDueAt("JVM", NOW.minusDays(1)));
+        Card oldest = cardDueAt("JDK", NOW.minusDays(9));
+        java.addCard(oldest);
+        Deck english = new Deck("English", null);
+        english.addCard(cardDueAt("bug", NOW.minusDays(3)));
+        deckRepository.save(java);
+        deckRepository.save(english);
+
+        assertThat(serviceWithRandom(0).nextCard(NOW)).contains(oldest);
+    }
+
+    @Test
     void waitingCardIsFoundWithDeck() {
         Deck deck = new Deck("Java", null);
         Card card = new Card("JVM", "машина");
@@ -210,6 +269,16 @@ class ReviewServiceTest {
         RecallResult result = reviewService.checkRecall(card, "а".repeat(Card.DEFINITION_MAX_LENGTH + 500));
 
         assertThat(result.getTypedAnswer()).hasSize(Card.DEFINITION_MAX_LENGTH);
+    }
+
+    private ReviewService serviceWithRandom(int pickedIndex) {
+        Random random = new Random() {
+            @Override
+            public int nextInt(int bound) {
+                return Math.min(pickedIndex, bound - 1);
+            }
+        };
+        return new ReviewService(cardRepository, new SpacedRepetitionService(), random);
     }
 
     private Card cardDueAt(String term, LocalDateTime nextReviewAt) {
