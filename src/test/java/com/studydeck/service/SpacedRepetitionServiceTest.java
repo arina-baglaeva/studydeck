@@ -283,6 +283,93 @@ class SpacedRepetitionServiceTest {
         assertThat(card.getNextReviewAt()).isEqualTo(now.plusMinutes(10));
     }
 
+    @Test
+    void firstReviewTimeIsRemembered() {
+        Card card = new Card("JVM", "машина");
+
+        service.review(card, Grade.AGAIN, now);
+        service.review(card, Grade.GOOD, now.plusMinutes(10));
+
+        assertThat(card.getFirstReviewedAt()).isEqualTo(now);
+    }
+
+    @Test
+    void newCardStartsWithEaseFactorTwoAndHalf() {
+        Card card = new Card("JVM", "машина");
+
+        service.review(card, Grade.GOOD, now);
+        service.review(card, Grade.GOOD, now.plusMinutes(10));
+
+        assertThat(card.getEaseFactor()).isEqualTo(Card.START_EASE_FACTOR);
+    }
+
+    @Test
+    void hardOnGraduatedCardIsNotALapse() {
+        Card card = reviewedCard(3, 10, 2.5);
+
+        service.review(card, Grade.HARD, now);
+
+        assertThat(card.getLapses()).isZero();
+        assertThat(SpacedRepetitionService.isLearning(card)).isFalse();
+        assertThat(card.getRepetitions()).isEqualTo(4);
+    }
+
+    @Test
+    void manyHardGradesStopAtMinimumEaseFactor() {
+        Card card = reviewedCard(2, 6, 2.5);
+
+        for (int i = 0; i < 20; i++) {
+            service.review(card, Grade.HARD, card.getNextReviewAt());
+        }
+
+        assertThat(card.getEaseFactor()).isEqualTo(Card.MIN_EASE_FACTOR);
+    }
+
+    @Test
+    void repeatedLapsesAreCounted() {
+        Card card = reviewedCard(4, 30, 2.5);
+
+        service.review(card, Grade.AGAIN, now);
+        service.review(card, Grade.GOOD, now.plusMinutes(10));
+        service.review(card, Grade.AGAIN, card.getNextReviewAt());
+
+        assertThat(card.getLapses()).isEqualTo(2);
+        assertThat(card.getEaseFactor()).isCloseTo(2.1, within(0.001));
+    }
+
+    @Test
+    void goodAnswersMakeIntervalsGrowStepByStep() {
+        Card card = new Card("JVM", "машина");
+        LocalDateTime time = now;
+        service.review(card, Grade.GOOD, time);
+        time = card.getNextReviewAt();
+        int previous = 0;
+
+        for (int i = 0; i < 5; i++) {
+            service.review(card, Grade.GOOD, time);
+            assertThat(card.getIntervalDays()).isGreaterThan(previous);
+            previous = card.getIntervalDays();
+            time = card.getNextReviewAt();
+        }
+
+        assertThat(previous).isGreaterThan(30);
+    }
+
+    @Test
+    void reviewsBeforeExamNeverJumpOverExamDay() {
+        LocalDate examDate = now.toLocalDate().plusDays(20);
+        SpacedRepetitionService fuzzy = new SpacedRepetitionService(new Random(3));
+        Card card = new Card("JVM", "машина");
+        deckWithExam(examDate).addCard(card);
+        LocalDateTime time = now;
+
+        while (time.toLocalDate().isBefore(examDate.minusDays(1))) {
+            fuzzy.review(card, Grade.EASY, time);
+            time = card.getNextReviewAt();
+            assertThat(time.toLocalDate()).isBefore(examDate);
+        }
+    }
+
     private Deck deckWithExam(LocalDate examDate) {
         Deck deck = new Deck("Java", null);
         deck.setExamDate(examDate);
