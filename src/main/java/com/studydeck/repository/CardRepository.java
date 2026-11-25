@@ -42,4 +42,6 @@ public interface CardRepository extends JpaRepository<Card, Long> {
     long countByNextReviewAtLessThanEqual(LocalDateTime now);
 
     long countByNextReviewAtIsNull();
+
+    long countByFirstReviewedAtGreaterThanEqual(LocalDateTime since);
 }

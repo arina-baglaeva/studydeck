@@ -7,6 +7,10 @@
     <h1>Повторить сегодня</h1>
     <div class="empty" th:if="${card == null}">
         <p>На сегодня всё повторено. Возвращайтесь завтра!</p>
+        <p class="muted" th:if="${newLimitReached}">
+            Новые карточки ждут завтра: в день изучается не больше
+            <span class="review-new-limit" th:text="${newCardsPerDay}">20</span> новых карточек.
+        </p>
         <p><a th:href="@{/}">К моим колодам</a></p>
     </div>
     <div class="review" th:if="${card != null}">

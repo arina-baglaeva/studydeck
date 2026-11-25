@@ -58,6 +58,8 @@ public class Card {
 
     private LocalDateTime nextReviewAt;
 
+    private LocalDateTime firstReviewedAt;
+
     protected Card() {
     }
 
@@ -150,6 +152,14 @@ public class Card {
 
     public void setNextReviewAt(LocalDateTime nextReviewAt) {
         this.nextReviewAt = nextReviewAt;
+    }
+
+    public LocalDateTime getFirstReviewedAt() {
+        return firstReviewedAt;
+    }
+
+    public void setFirstReviewedAt(LocalDateTime firstReviewedAt) {
+        this.firstReviewedAt = firstReviewedAt;
     }
 
     public boolean isNew() {

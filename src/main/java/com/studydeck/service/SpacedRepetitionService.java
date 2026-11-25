@@ -34,6 +34,9 @@ public class SpacedRepetitionService {
     }
 
     public void review(Card card, Grade grade, LocalDateTime now) {
+        if (card.getFirstReviewedAt() == null) {
+            card.setFirstReviewedAt(now);
+        }
         if (isLearning(card)) {
             learn(card, grade, now);
         } else if (grade.isLapse()) {

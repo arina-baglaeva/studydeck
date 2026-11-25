@@ -25,8 +25,11 @@ public class ReviewController {
     @GetMapping("/review")
     public String review(Model model) {
         LocalDateTime now = LocalDateTime.now();
-        model.addAttribute("card", reviewService.nextCard(now).orElse(null));
+        Card card = reviewService.nextCard(now).orElse(null);
+        model.addAttribute("card", card);
         model.addAttribute("remaining", reviewService.countForToday(now));
+        model.addAttribute("newLimitReached", card == null && reviewService.hasNewCardsWaitingForTomorrow(now));
+        model.addAttribute("newCardsPerDay", reviewService.getNewCardsPerDay());
         model.addAttribute("answerMaxLength", Card.DEFINITION_MAX_LENGTH);
         model.addAttribute("revealed", false);
         return "review";

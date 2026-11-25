@@ -271,6 +271,114 @@ class ReviewServiceTest {
         assertThat(result.getTypedAnswer()).hasSize(Card.DEFINITION_MAX_LENGTH);
     }
 
+    @Test
+    void defaultLimitIsTwentyNewCardsPerDay() {
+        assertThat(reviewService.getNewCardsPerDay()).isEqualTo(20);
+        assertThat(reviewService.newCardsLeftToday(NOW)).isEqualTo(20);
+    }
+
+    @Test
+    void countShowsNoMoreThanTwentyNewCards() {
+        deckWithNewCards(25);
+
+        assertThat(reviewService.countForToday(NOW)).isEqualTo(20);
+    }
+
+    @Test
+    void dueCardsAreNotLimited() {
+        Deck deck = new Deck("Java", null);
+        for (int i = 0; i < 30; i++) {
+            deck.addCard(cardDueAt("term " + i, NOW.minusDays(1)));
+        }
+        deckRepository.save(deck);
+
+        assertThat(serviceWithLimit(5).countForToday(NOW)).isEqualTo(30);
+    }
+
+    @Test
+    void cardsStartedTodayUseUpTheLimit() {
+        Deck deck = deckWithNewCards(5);
+        deck.addCard(startedAt("JVM", NOW.minusHours(2)));
+        deck.addCard(startedAt("JDK", NOW.minusHours(1)));
+        deckRepository.save(deck);
+        ReviewService service = serviceWithLimit(3);
+
+        assertThat(service.newCardsLeftToday(NOW)).isEqualTo(1);
+        assertThat(service.countForToday(NOW)).isEqualTo(1);
+    }
+
+    @Test
+    void cardsStartedYesterdayDoNotCount() {
+        Deck deck = deckWithNewCards(5);
+        deck.addCard(startedAt("JVM", NOW.minusDays(1)));
+        deckRepository.save(deck);
+
+        assertThat(serviceWithLimit(3).newCardsLeftToday(NOW)).isEqualTo(3);
+    }
+
+    @Test
+    void noNewCardIsShownWhenLimitIsReached() {
+        Deck deck = deckWithNewCards(2);
+        deck.addCard(startedAt("JVM", NOW.minusHours(1)));
+        deckRepository.save(deck);
+        ReviewService service = serviceWithLimit(1);
+
+        assertThat(service.nextCard(NOW)).isEmpty();
+        assertThat(service.countForToday(NOW)).isZero();
+        assertThat(service.hasNewCardsWaitingForTomorrow(NOW)).isTrue();
+    }
+
+    @Test
+    void dueCardIsStillShownWhenLimitIsReached() {
+        Deck deck = new Deck("Java", null);
+        deck.addCard(new Card("JDK", "набор"));
+        Card due = cardDueAt("JRE", NOW.minusMinutes(1));
+        due.setFirstReviewedAt(NOW.minusMinutes(20));
+        deck.addCard(due);
+        deckRepository.save(deck);
+
+        assertThat(serviceWithLimit(1).nextCard(NOW)).contains(due);
+    }
+
+    @Test
+    void gradingNewCardWhenLimitIsReachedIsIgnored() {
+        Deck deck = deckWithNewCards(1);
+        Card fresh = deck.getCards().get(0);
+        deck.addCard(startedAt("JVM", NOW.minusHours(1)));
+        deckRepository.save(deck);
+
+        boolean graded = serviceWithLimit(1).grade(fresh.getId(), Grade.GOOD, NOW);
+
+        assertThat(graded).isFalse();
+        assertThat(cardRepository.findById(fresh.getId()).orElseThrow().isNew()).isTrue();
+    }
+
+    @Test
+    void newCardOverLimitIsNotWaiting() {
+        Deck deck = deckWithNewCards(1);
+        Card fresh = deck.getCards().get(0);
+
+        assertThat(serviceWithLimit(0).findWaitingCard(fresh.getId(), NOW)).isEmpty();
+    }
+
+    @Test
+    void gradingNewCardUsesOnePlaceOfTheLimit() {
+        Deck deck = deckWithNewCards(3);
+        ReviewService service = serviceWithLimit(2);
+
+        service.grade(deck.getCards().get(0).getId(), Grade.GOOD, NOW);
+
+        assertThat(service.newCardsLeftToday(NOW)).isEqualTo(1);
+        assertThat(service.countForToday(NOW)).isEqualTo(1);
+    }
+
+    @Test
+    void wrongLimitIsRejected() {
+        assertThatThrownBy(() -> serviceWithLimit(-1)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> serviceWithLimit(ReviewService.MAX_NEW_CARDS_PER_DAY + 1))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
     private ReviewService serviceWithRandom(int pickedIndex) {
         Random random = new Random() {
             @Override
@@ -278,7 +386,26 @@ class ReviewServiceTest {
                 return Math.min(pickedIndex, bound - 1);
             }
         };
-        return new ReviewService(cardRepository, new SpacedRepetitionService(), random);
+        return new ReviewService(cardRepository, new SpacedRepetitionService(), random,
+                ReviewService.DEFAULT_NEW_CARDS_PER_DAY);
+    }
+
+    private ReviewService serviceWithLimit(int newCardsPerDay) {
+        return new ReviewService(cardRepository, new SpacedRepetitionService(), new Random(1), newCardsPerDay);
+    }
+
+    private Deck deckWithNewCards(int count) {
+        Deck deck = new Deck("Java", null);
+        for (int i = 0; i < count; i++) {
+            deck.addCard(new Card("term " + i, "определение " + i));
+        }
+        return deckRepository.save(deck);
+    }
+
+    private Card startedAt(String term, LocalDateTime firstReviewedAt) {
+        Card card = cardDueAt(term, NOW.plusDays(1));
+        card.setFirstReviewedAt(firstReviewedAt);
+        return card;
     }
 
     private Card cardDueAt(String term, LocalDateTime nextReviewAt) {

@@ -136,6 +136,27 @@ class ReviewControllerTest {
     }
 
     @Test
+    void reviewPageExplainsDailyNewCardLimit() throws Exception {
+        when(reviewService.nextCard(any())).thenReturn(Optional.empty());
+        when(reviewService.hasNewCardsWaitingForTomorrow(any())).thenReturn(true);
+        when(reviewService.getNewCardsPerDay()).thenReturn(20);
+
+        mockMvc.perform(get("/review"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Новые карточки ждут завтра")))
+                .andExpect(content().string(containsString("<span class=\"review-new-limit\">20</span>")));
+    }
+
+    @Test
+    void limitMessageIsHiddenWhenNoNewCardsWait() throws Exception {
+        when(reviewService.nextCard(any())).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/review"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("Новые карточки ждут завтра"))));
+    }
+
+    @Test
     void cardTextIsEscaped() throws Exception {
         givenNextCard("<script>alert(1)</script>", "<b>x</b>");
 
