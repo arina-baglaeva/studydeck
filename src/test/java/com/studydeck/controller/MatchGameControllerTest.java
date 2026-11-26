@@ -7,6 +7,7 @@ import com.studydeck.exception.NotFoundException;
 import com.studydeck.model.Deck;
 import com.studydeck.service.DeckService;
 import com.studydeck.service.MatchGameService;
+import com.studydeck.service.StudySessionService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -20,6 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -37,6 +39,9 @@ class MatchGameControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockBean
+    private StudySessionService studySessionService;
 
     @MockBean
     private DeckService deckService;
@@ -230,6 +235,63 @@ class MatchGameControllerTest {
                 .andExpect(status().isMethodNotAllowed());
     }
 
+    @Test
+    void matchPageRemembersPairCountInSession() throws Exception {
+        givenPlayableGame();
+        MockHttpSession session = new MockHttpSession();
+
+        mockMvc.perform(get("/decks/1/match").session(session))
+                .andExpect(status().isOk());
+
+        assertThat(session.getAttribute(MatchGameController.pairsKey(1L))).isEqualTo(2);
+    }
+
+    @Test
+    void savedResultIsRecordedAsStudySession() throws Exception {
+        MockHttpSession session = startedGameSession(1L);
+        when(matchGameService.isAcceptableTime(eq(20_000L), anyLong())).thenReturn(true);
+        when(deckService.recordMatchTime(1L, 20_000)).thenReturn(new MatchResult(20_000, true));
+
+        mockMvc.perform(post("/decks/1/match/result").session(session).param("timeMillis", "20000"))
+                .andExpect(status().isOk());
+
+        verify(studySessionService).recordMatch(1L, 6, 20_000);
+    }
+
+    @Test
+    void resultWithoutPairCountIsRejected() throws Exception {
+        MockHttpSession session = startedGameSession(1L);
+        session.removeAttribute(MatchGameController.pairsKey(1L));
+
+        mockMvc.perform(post("/decks/1/match/result").session(session).param("timeMillis", "20000"))
+                .andExpect(status().isBadRequest());
+
+        verify(studySessionService, never()).recordMatch(anyLong(), anyInt(), anyLong());
+    }
+
+    @Test
+    void resultOfNotPlayableGameIsRejected() throws Exception {
+        MockHttpSession session = startedGameSession(1L);
+        session.setAttribute(MatchGameController.pairsKey(1L), 1);
+
+        mockMvc.perform(post("/decks/1/match/result").session(session).param("timeMillis", "20000"))
+                .andExpect(status().isBadRequest());
+
+        verify(deckService, never()).recordMatchTime(anyLong(), anyLong());
+        verify(studySessionService, never()).recordMatch(anyLong(), anyInt(), anyLong());
+    }
+
+    @Test
+    void rejectedTimeIsNotRecordedAsStudySession() throws Exception {
+        MockHttpSession session = startedGameSession(1L);
+        when(matchGameService.isAcceptableTime(eq(10L), anyLong())).thenReturn(false);
+
+        mockMvc.perform(post("/decks/1/match/result").session(session).param("timeMillis", "10"))
+                .andExpect(status().isBadRequest());
+
+        verify(studySessionService, never()).recordMatch(anyLong(), anyInt(), anyLong());
+    }
+
     private void givenPlayableGame() {
         when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
         when(matchGameService.newGame(1L)).thenReturn(playableGame());
@@ -244,6 +306,7 @@ class MatchGameControllerTest {
     private MockHttpSession startedGameSession(Long deckId) {
         MockHttpSession session = new MockHttpSession();
         session.setAttribute(MatchGameController.startedAtKey(deckId), Instant.now().minusSeconds(60));
+        session.setAttribute(MatchGameController.pairsKey(deckId), 6);
         return session;
     }
 

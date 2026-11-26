@@ -5,8 +5,10 @@ import com.studydeck.dto.QuizResult;
 import com.studydeck.dto.WriteQuestion;
 import com.studydeck.exception.NotFoundException;
 import com.studydeck.model.Deck;
+import com.studydeck.model.StudyMode;
 import com.studydeck.service.DeckService;
 import com.studydeck.service.QuizService;
+import com.studydeck.service.StudySessionService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -21,7 +23,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -38,6 +42,9 @@ class WriteControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockBean
+    private StudySessionService studySessionService;
 
     @MockBean
     private DeckService deckService;
@@ -180,6 +187,33 @@ class WriteControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(not(containsString("<script>alert(1)</script>"))))
                 .andExpect(content().string(containsString("&lt;script&gt;")));
+    }
+
+    @Test
+    void checkedAnswersAreSavedAsStudySession() throws Exception {
+        List<WriteQuestion> questions = List.of(new WriteQuestion(1L, "машина", "JVM"),
+                new WriteQuestion(2L, "набор", "JDK"));
+        MockHttpSession session = sessionWithQuestions(1L, questions);
+        when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
+        when(quizService.checkWritten(eq(questions), anyList())).thenReturn(new QuizResult(List.of(
+                new QuizAnswer("машина", "JVM", "JVM", true),
+                new QuizAnswer("набор", "JDK", "JDK", true))));
+
+        mockMvc.perform(post("/decks/1/write").session(session).param("answer0", "JVM").param("answer1", "JDK"))
+                .andExpect(status().isOk());
+
+        verify(studySessionService).recordAnswers(1L, StudyMode.WRITE, 2, 2);
+    }
+
+    @Test
+    void answersFromOtherDeckAreNotSaved() throws Exception {
+        MockHttpSession session = sessionWithQuestions(1L, List.of(new WriteQuestion(1L, "машина", "JVM")));
+        when(deckService.getById(2L)).thenReturn(new Deck("Other", null));
+
+        mockMvc.perform(post("/decks/2/write").session(session).param("answer0", "JVM"))
+                .andExpect(status().is3xxRedirection());
+
+        verify(studySessionService, never()).recordAnswers(anyLong(), any(), anyInt(), anyInt());
     }
 
     private MockHttpSession sessionWithQuestions(Long deckId, List<WriteQuestion> questions) {

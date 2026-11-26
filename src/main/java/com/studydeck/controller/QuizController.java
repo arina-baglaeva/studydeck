@@ -3,7 +3,9 @@ package com.studydeck.controller;
 import com.studydeck.dto.QuizQuestion;
 import com.studydeck.dto.QuizResult;
 import com.studydeck.service.DeckService;
+import com.studydeck.model.StudyMode;
 import com.studydeck.service.QuizService;
+import com.studydeck.service.StudySessionService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -24,10 +26,13 @@ public class QuizController {
 
     private final DeckService deckService;
     private final QuizService quizService;
+    private final StudySessionService studySessionService;
 
-    public QuizController(DeckService deckService, QuizService quizService) {
+    public QuizController(DeckService deckService, QuizService quizService,
+                          StudySessionService studySessionService) {
         this.deckService = deckService;
         this.quizService = quizService;
+        this.studySessionService = studySessionService;
     }
 
     @GetMapping("/decks/{deckId}/quiz")
@@ -53,6 +58,7 @@ public class QuizController {
             return "redirect:/decks/" + deckId + "/quiz";
         }
         QuizResult result = quizService.check(questions, chosenIndexes(params, questions.size()));
+        studySessionService.recordAnswers(deckId, StudyMode.QUIZ, result.getCorrectCount(), result.getTotal());
         model.addAttribute("result", result);
         return "quiz-result";
     }

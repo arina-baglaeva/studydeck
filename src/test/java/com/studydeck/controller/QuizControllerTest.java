@@ -5,8 +5,10 @@ import com.studydeck.dto.QuizQuestion;
 import com.studydeck.dto.QuizResult;
 import com.studydeck.exception.NotFoundException;
 import com.studydeck.model.Deck;
+import com.studydeck.model.StudyMode;
 import com.studydeck.service.DeckService;
 import com.studydeck.service.QuizService;
+import com.studydeck.service.StudySessionService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -22,7 +24,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -39,6 +43,9 @@ class QuizControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockBean
+    private StudySessionService studySessionService;
 
     @MockBean
     private DeckService deckService;
@@ -205,6 +212,31 @@ class QuizControllerTest {
 
         mockMvc.perform(post("/decks/999/quiz"))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void checkedQuizIsSavedAsStudySession() throws Exception {
+        List<QuizQuestion> questions = List.of(question("JVM", "машина", 2), question("JDK", "набор", 0));
+        MockHttpSession session = sessionWithQuiz(1L, questions);
+        when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
+        when(quizService.check(eq(questions), anyList())).thenReturn(new QuizResult(List.of(
+                new QuizAnswer("JVM", "машина", "машина", true),
+                new QuizAnswer("JDK", "вариант1", "набор", false))));
+
+        mockMvc.perform(post("/decks/1/quiz").session(session).param("answer0", "2").param("answer1", "1"))
+                .andExpect(status().isOk());
+
+        verify(studySessionService).recordAnswers(1L, StudyMode.QUIZ, 1, 2);
+    }
+
+    @Test
+    void quizWithoutSessionIsNotSaved() throws Exception {
+        when(deckService.getById(1L)).thenReturn(new Deck("Java", null));
+
+        mockMvc.perform(post("/decks/1/quiz").param("answer0", "1"))
+                .andExpect(status().is3xxRedirection());
+
+        verify(studySessionService, never()).recordAnswers(anyLong(), any(), anyInt(), anyInt());
     }
 
     private MockHttpSession sessionWithQuiz(Long deckId, List<QuizQuestion> questions) {

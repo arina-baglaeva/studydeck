@@ -4,7 +4,9 @@ import com.studydeck.dto.QuizResult;
 import com.studydeck.dto.WriteQuestion;
 import com.studydeck.model.Card;
 import com.studydeck.service.DeckService;
+import com.studydeck.model.StudyMode;
 import com.studydeck.service.QuizService;
+import com.studydeck.service.StudySessionService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -25,10 +27,13 @@ public class WriteController {
 
     private final DeckService deckService;
     private final QuizService quizService;
+    private final StudySessionService studySessionService;
 
-    public WriteController(DeckService deckService, QuizService quizService) {
+    public WriteController(DeckService deckService, QuizService quizService,
+                          StudySessionService studySessionService) {
         this.deckService = deckService;
         this.quizService = quizService;
+        this.studySessionService = studySessionService;
     }
 
     @GetMapping("/decks/{deckId}/write")
@@ -54,6 +59,7 @@ public class WriteController {
             return "redirect:/decks/" + deckId + "/write";
         }
         QuizResult result = quizService.checkWritten(questions, typedAnswers(params, questions.size()));
+        studySessionService.recordAnswers(deckId, StudyMode.WRITE, result.getCorrectCount(), result.getTotal());
         model.addAttribute("result", result);
         model.addAttribute("mode", "write");
         return "quiz-result";
