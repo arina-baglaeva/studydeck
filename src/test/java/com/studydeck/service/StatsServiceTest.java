@@ -1,12 +1,15 @@
 package com.studydeck.service;
 
+import com.studydeck.dto.DeckProgress;
 import com.studydeck.dto.ModeStats;
+import com.studydeck.model.Card;
 import com.studydeck.model.Deck;
 import com.studydeck.model.StudyMode;
 import com.studydeck.model.StudySession;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
 
 import java.util.List;
@@ -25,6 +28,9 @@ class StatsServiceTest {
 
     @Autowired
     private DeckService deckService;
+
+    @Autowired
+    private TestEntityManager entityManager;
 
     @Test
     void modeStatsSumAnswersOfEachMode() {
@@ -68,5 +74,42 @@ class StatsServiceTest {
         assertThat(recent.get(0).getCorrectCount()).isEqualTo(11);
         assertThat(recent.get(0).getDeck().getTitle()).isEqualTo("Java");
         assertThat(statsService.totalSessions()).isEqualTo(12);
+    }
+
+    @Test
+    void deckProgressCountsCardsThatLeftLearningSteps() {
+        Deck deck = new Deck("Java", null);
+        deck.addCard(cardWithInterval("JVM", 0));
+        deck.addCard(cardWithInterval("JDK", 1));
+        deck.addCard(cardWithInterval("JRE", 6));
+        deck.addCard(cardWithInterval("GC", 0));
+        entityManager.persist(deck);
+        entityManager.flush();
+
+        List<DeckProgress> progress = statsService.deckProgress();
+
+        assertThat(progress).hasSize(1);
+        assertThat(progress.get(0).getTitle()).isEqualTo("Java");
+        assertThat(progress.get(0).getCardCount()).isEqualTo(4);
+        assertThat(progress.get(0).getLearnedCount()).isEqualTo(2);
+        assertThat(progress.get(0).getPercent()).isEqualTo(50);
+    }
+
+    @Test
+    void emptyDeckHasZeroProgress() {
+        deckService.create("Пустая", null);
+
+        List<DeckProgress> progress = statsService.deckProgress();
+
+        assertThat(progress).hasSize(1);
+        assertThat(progress.get(0).getCardCount()).isZero();
+        assertThat(progress.get(0).getLearnedCount()).isZero();
+        assertThat(progress.get(0).getPercent()).isZero();
+    }
+
+    private Card cardWithInterval(String term, int intervalDays) {
+        Card card = new Card(term, "определение");
+        card.setIntervalDays(intervalDays);
+        return card;
     }
 }

@@ -1,5 +1,6 @@
 package com.studydeck.controller;
 
+import com.studydeck.dto.DeckProgress;
 import com.studydeck.dto.ModeStats;
 import com.studydeck.model.Deck;
 import com.studydeck.model.StudyMode;
@@ -48,6 +49,30 @@ class StatsControllerTest {
                 .andExpect(content().string(containsString("75%")))
                 .andExpect(content().string(containsString("Соедини")))
                 .andExpect(content().string(containsString("42 с")));
+    }
+
+    @Test
+    void statsPageShowsDeckProgress() throws Exception {
+        when(statsService.deckProgress()).thenReturn(List.of(new DeckProgress(7L, "Java", 8, 2)));
+
+        mockMvc.perform(get("/stats"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Прогресс по колодам")))
+                .andExpect(content().string(containsString("2 из 8")))
+                .andExpect(content().string(containsString("value=\"25\"")))
+                .andExpect(content().string(containsString("25%")))
+                .andExpect(content().string(containsString("href=\"/decks/7\"")));
+    }
+
+    @Test
+    void progressDeckTitleIsEscaped() throws Exception {
+        when(statsService.deckProgress()).thenReturn(List.of(
+                new DeckProgress(7L, "<img src=x onerror=alert(1)>", 1, 0)));
+
+        mockMvc.perform(get("/stats"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("<img src=x"))))
+                .andExpect(content().string(containsString("&lt;img src=x")));
     }
 
     @Test

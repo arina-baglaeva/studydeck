@@ -1,8 +1,10 @@
 package com.studydeck.service;
 
+import com.studydeck.dto.DeckProgress;
 import com.studydeck.dto.ModeStats;
 import com.studydeck.model.StudyMode;
 import com.studydeck.model.StudySession;
+import com.studydeck.repository.DeckRepository;
 import com.studydeck.repository.StudySessionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,9 +18,11 @@ import java.util.Map;
 public class StatsService {
 
     private final StudySessionRepository studySessionRepository;
+    private final DeckRepository deckRepository;
 
-    public StatsService(StudySessionRepository studySessionRepository) {
+    public StatsService(StudySessionRepository studySessionRepository, DeckRepository deckRepository) {
         this.studySessionRepository = studySessionRepository;
+        this.deckRepository = deckRepository;
     }
 
     @Transactional(readOnly = true)
@@ -42,5 +46,10 @@ public class StatsService {
     @Transactional(readOnly = true)
     public long totalSessions() {
         return studySessionRepository.count();
+    }
+
+    @Transactional(readOnly = true)
+    public List<DeckProgress> deckProgress() {
+        return deckRepository.findAllProgress();
     }
 }

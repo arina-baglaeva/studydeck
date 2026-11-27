@@ -18,6 +18,7 @@ public class StatsController {
     public String stats(Model model) {
         model.addAttribute("totalSessions", statsService.totalSessions());
         model.addAttribute("modeStats", statsService.modeStats());
+        model.addAttribute("deckProgress", statsService.deckProgress());
         model.addAttribute("recentSessions", statsService.recentSessions());
         return "stats";
     }

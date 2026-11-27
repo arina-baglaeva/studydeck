@@ -27,6 +27,30 @@
         </tbody>
     </table>
 
+    <h2>Прогресс по колодам</h2>
+    <p class="stats-hint">Выученной считается карточка, которая прошла шаги заучивания в режиме «Повторить сегодня».</p>
+    <p class="empty" th:if="${#lists.isEmpty(deckProgress)}">Колод пока нет.</p>
+    <table class="card-table stats-progress" th:unless="${#lists.isEmpty(deckProgress)}">
+        <thead>
+        <tr>
+            <th>Колода</th>
+            <th>Выучено</th>
+            <th>Прогресс</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="progress : ${deckProgress}">
+            <td><a th:href="@{/decks/{id}(id=${progress.deckId})}" th:text="${progress.title}">Колода</a></td>
+            <td th:text="${progress.learnedCount} + ' из ' + ${progress.cardCount}">0 из 0</td>
+            <td>
+                <progress class="deck-progress" max="100" th:value="${progress.percent}"
+                          th:attr="aria-label='Прогресс колоды ' + ${progress.title}">0</progress>
+                <span class="deck-progress-percent" th:text="${progress.percent} + '%'">0%</span>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
     <h2>Последние занятия</h2>
     <p class="empty" th:if="${#lists.isEmpty(recentSessions)}">Занятий пока не было. Пройдите тест или игру «Соедини».</p>
     <table class="card-table stats-recent" th:unless="${#lists.isEmpty(recentSessions)}">

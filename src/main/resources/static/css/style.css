@@ -662,3 +662,18 @@ main {
     border-radius: 8px;
     background: #eef4ff;
 }
+
+.stats-hint {
+    color: var(--muted);
+}
+
+.deck-progress {
+    width: 160px;
+    height: 12px;
+    vertical-align: middle;
+    accent-color: var(--accent);
+}
+
+.deck-progress-percent {
+    margin-left: 8px;
+}
