@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Статистика')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container">
+    <h1>Статистика</h1>
+    <p class="stats-total">Всего занятий: <strong th:text="${totalSessions}">0</strong></p>
+
+    <h2>По режимам</h2>
+    <table class="card-table stats-modes">
+        <thead>
+        <tr>
+            <th>Режим</th>
+            <th>Занятий</th>
+            <th>Верных ответов</th>
+            <th>Точность</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="stats : ${modeStats}">
+            <td th:text="${stats.mode.label}">Тест</td>
+            <td th:text="${stats.sessionCount}">0</td>
+            <td th:text="${stats.correctCount} + ' из ' + ${stats.totalCount}">0 из 0</td>
+            <td th:text="${stats.percent} + '%'">0%</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h2>Последние занятия</h2>
+    <p class="empty" th:if="${#lists.isEmpty(recentSessions)}">Занятий пока не было. Пройдите тест или игру «Соедини».</p>
+    <table class="card-table stats-recent" th:unless="${#lists.isEmpty(recentSessions)}">
+        <thead>
+        <tr>
+            <th>Когда</th>
+            <th>Колода</th>
+            <th>Режим</th>
+            <th>Результат</th>
+            <th>Время</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="studySession : ${recentSessions}">
+            <td th:text="${#temporals.format(studySession.finishedAt, 'dd.MM.yyyy HH:mm')}">01.01.2026 10:00</td>
+            <td><a th:href="@{/decks/{id}(id=${studySession.deck.id})}" th:text="${studySession.deck.title}">Колода</a></td>
+            <td th:text="${studySession.mode.label}">Тест</td>
+            <td th:text="${studySession.correctCount} + ' из ' + ${studySession.totalCount} + ' (' + ${studySession.percent} + '%)'">0 из 0</td>
+            <td th:text="${studySession.durationMillis != null} ? ${studySession.durationMillis / 1000} + ' с' : '—'">—</td>
+        </tr>
+        </tbody>
+    </table>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>
