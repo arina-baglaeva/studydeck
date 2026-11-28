@@ -2,6 +2,7 @@ package com.studydeck.service;
 
 import com.studydeck.dto.DeckProgress;
 import com.studydeck.dto.ModeStats;
+import com.studydeck.dto.Streak;
 import com.studydeck.model.Card;
 import com.studydeck.model.Deck;
 import com.studydeck.model.StudyMode;
@@ -12,6 +13,8 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -105,6 +108,40 @@ class StatsServiceTest {
         assertThat(progress.get(0).getCardCount()).isZero();
         assertThat(progress.get(0).getLearnedCount()).isZero();
         assertThat(progress.get(0).getPercent()).isZero();
+    }
+
+    @Test
+    void streakCountsDaysWithSessionsInARow() {
+        Deck deck = deckService.create("Java", null);
+        LocalDate today = LocalDate.of(2026, 11, 28);
+        sessionFinishedAt(deck, today.atTime(9, 0));
+        sessionFinishedAt(deck, today.atTime(18, 30));
+        sessionFinishedAt(deck, today.minusDays(1).atTime(23, 59));
+        sessionFinishedAt(deck, today.minusDays(2).atTime(0, 1));
+        sessionFinishedAt(deck, today.minusDays(5).atTime(12, 0));
+
+        Streak streak = statsService.currentStreak(today);
+
+        assertThat(streak.getDays()).isEqualTo(3);
+        assertThat(streak.isStudiedToday()).isTrue();
+    }
+
+    @Test
+    void streakIsZeroWithoutSessions() {
+        Streak streak = statsService.currentStreak(LocalDate.of(2026, 11, 28));
+
+        assertThat(streak.getDays()).isZero();
+        assertThat(streak.isStudiedToday()).isFalse();
+    }
+
+    private void sessionFinishedAt(Deck deck, LocalDateTime finishedAt) {
+        StudySession session = entityManager.persistAndFlush(new StudySession(deck, StudyMode.QUIZ, 1, 1, null));
+        entityManager.getEntityManager()
+                .createQuery("update StudySession s set s.finishedAt = :finishedAt where s.id = :id")
+                .setParameter("finishedAt", finishedAt)
+                .setParameter("id", session.getId())
+                .executeUpdate();
+        entityManager.clear();
     }
 
     private Card cardWithInterval(String term, int intervalDays) {
