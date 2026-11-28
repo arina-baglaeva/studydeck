@@ -2,20 +2,24 @@ package com.studydeck.controller;
 
 import com.studydeck.dto.DeckProgress;
 import com.studydeck.dto.ModeStats;
+import com.studydeck.dto.Streak;
 import com.studydeck.model.Deck;
 import com.studydeck.model.StudyMode;
 import com.studydeck.model.StudySession;
 import com.studydeck.service.StatsService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -30,6 +34,39 @@ class StatsControllerTest {
 
     @MockBean
     private StatsService statsService;
+
+    @BeforeEach
+    void setUp() {
+        when(statsService.currentStreak(any(LocalDate.class))).thenReturn(new Streak(0, false));
+    }
+
+    @Test
+    void statsPageShowsStreak() throws Exception {
+        when(statsService.currentStreak(any(LocalDate.class))).thenReturn(new Streak(3, true));
+
+        mockMvc.perform(get("/stats"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Серия: <strong>3 дня</strong> подряд")))
+                .andExpect(content().string(containsString("Сегодня вы уже занимались")));
+    }
+
+    @Test
+    void statsPageWarnsWhenStreakCanBreak() throws Exception {
+        when(statsService.currentStreak(any(LocalDate.class))).thenReturn(new Streak(5, false));
+
+        mockMvc.perform(get("/stats"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("5 дней")))
+                .andExpect(content().string(containsString("чтобы не прервать серию")));
+    }
+
+    @Test
+    void emptyStreakInvitesToStart() throws Exception {
+        mockMvc.perform(get("/stats"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("0 дней")))
+                .andExpect(content().string(containsString("чтобы начать серию")));
+    }
 
     @Test
     void statsPageShowsModesAndRecentSessions() throws Exception {

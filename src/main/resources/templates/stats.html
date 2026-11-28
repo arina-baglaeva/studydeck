@@ -7,6 +7,13 @@
     <h1>Статистика</h1>
     <p class="stats-total">Всего занятий: <strong th:text="${totalSessions}">0</strong></p>
 
+    <div class="streak">
+        <p class="streak-days">Серия: <strong th:text="${streak.days} + ' ' + ${streak.dayWord}">0 дней</strong> подряд</p>
+        <p class="stats-hint" th:if="${streak.studiedToday}">Сегодня вы уже занимались — серия продолжается.</p>
+        <p class="stats-hint" th:if="${!streak.studiedToday and streak.days > 0}">Пройдите сегодня тест или игру, чтобы не прервать серию.</p>
+        <p class="stats-hint" th:if="${!streak.studiedToday and streak.days == 0}">Пройдите тест или игру, чтобы начать серию.</p>
+    </div>
+
     <h2>По режимам</h2>
     <table class="card-table stats-modes">
         <thead>
